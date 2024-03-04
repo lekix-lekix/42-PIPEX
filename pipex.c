@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/01 17:03:47 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/04 18:56:53 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,8 +224,9 @@ t_cmd	*create_cmd_lst(char **argv, int args_nb)
 
 	i = -1;
 	cmd_lst = NULL;
-	while (++i < args_nb)
+	while (++i < args_nb - 1)
 	{
+        printf("args nb %d\n", args_nb);
 		// printf("arg = %s\n", argv[i]);
 		arg = ft_split(argv[i], ' ');
 		if (!arg)
@@ -329,17 +330,128 @@ int	check_failed_alloc(t_cmd **lst)
 	return (0);
 }
 
-int	exec_cmd_lst(t_cmd **lst)
+int ft_list_size(t_cmd **lst)
+{
+    t_cmd   *current;
+    int     i;
+
+    i = 0;
+    current = *lst;
+    while (current)
+    {
+        i++;
+        current = current->next;
+    }
+    return (i);
+}
+
+int **alloc_int_tab(int size, int int_nb)
+{
+    int **tab;
+    int i;
+
+    i = -1;
+    tab = malloc(sizeof(int *) * size);
+    if (!tab)
+        return (NULL);
+    while (++i < size)
+    {
+        tab[i] = malloc(sizeof(int) * int_nb);
+        if (!tab[i])
+            return (NULL);
+    }
+    return (tab);
+}
+
+int init_first_child(t_cmd *current, char **envp, int *pipe)
+{
+    int pid;
+
+    pid = fork();
+    if (pid == -1)
+        return (-1);
+    if (pid == 0)
+    {
+        close(pipe[0]);
+        if (dup2(pipe[1], 1) == -1)
+            return (-1);
+        close(pipe[1]);
+        if (execve(current->execve_args[0], current->execve_args, envp) == -1)
+            return (-1);   
+    }
+    return (pid);
+}
+
+int init_last_child(t_cmd *current, char **envp, int *pipe, int outfile)
+{
+    int pid;
+    
+    pid = fork();
+    if (pid == -1)
+        return (-1);
+    if (pid == 0)
+    {
+        if (dup2(pipe[0], 0) == -1)
+            return (-1);
+        if (dup2(outfile, 1) == -1)
+            return (-1);
+        close(pipe[0]);
+        close(pipe[1]);
+        if (execve(current->execve_args[0], current->execve_args, envp) == -1)
+            return (-1);
+    }
+    return (pid);
+}
+
+int	exec_cmd_lst(t_cmd **lst, char **envp, int outfile)
 {
 	t_cmd	*current;
-	int		pipe_fds[2];
-    int     pid;
+	int		**pipe_fds;
+    int     *pid;
+    int     i;
 
 	current = *lst;
-	while (current)
+    pipe_fds = alloc_int_tab(ft_list_size(lst), 2);
+    if (!pipe_fds)
+        return (-1);
+    pid = malloc(sizeof(int) * (ft_list_size(lst)));
+    if (!pid)
+        return (-1);
+    i = 0;
+    if (pipe(pipe_fds[i]) == -1)
+        return (-1);
+    while (current)
 	{
-        
-	}
+        printf("current %s\n", current->execve_args[0]);
+  
+        if (i == 0)
+            pid[i] = init_first_child(current, envp, pipe_fds[0]);
+        if (!current->next)
+            pid[i] = init_last_child(current, envp, pipe_fds[0], outfile);
+        i++;
+        current = current->next;
+        // pid = fork();
+        // printf("pid = %d\n", pid);
+        //     printf("curr->exec[0] = %s\n", current->execve_args[0]);
+        // if (pid == 0)
+        // {
+        //     close(pipe_fds[0]);
+        //     dup2(pipe_fds[1], 1);
+        //     if (execve(current->execve_args[0], current->execve_args, envp) == -1)
+        //         printf("execve pb\n");
+        // }
+        // pid = fork();
+        // if (pid == 0)
+        // {
+        //    close(pipe_fds[1]);
+        //    dup2(pipe_fds[0], 0);
+        //     dup2(outfile, 1);
+        //    current = current->next;
+        //    execve(current->execve_args[0], current->execve_args, envp);
+    }
+    close(pipe_fds[0][1]);
+    close(pipe_fds[0][0]);
+    return (0);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -356,9 +468,9 @@ int	main(int argc, char **argv, char **envp)
 	// char	read_child[200];
 	// int		saved_stdin;
 	if (access(argv[1], R_OK) == -1)
-		return (bash_return_error(argv[1], NULL));
+		bash_return_error(argv[1], NULL); // should not return
 	if (access(argv[argc - 1], R_OK) == -1)
-		outfile = open(argv[argc - 1], O_CREAT, 700); // need protection
+		outfile = open(argv[argc - 1], O_WRONLY | O_APPEND | O_CREAT, 0777); // need protection
 	path = get_path(envp);
 	if (!path)
 		return (-1); // need free close whatever
@@ -367,16 +479,23 @@ int	main(int argc, char **argv, char **envp)
 		return (-1); // need free close whatever
 	current = cmds;
 	check_cmds(&cmds, path);
+   while (current)
+    {
+        print_tab(current->execve_args);
+        current = current->next;
+    }
+    printf("coucou\n");
 	if (!check_failed_alloc(&cmds))
-		exec_cmd_lst(cmds);
-	while (current)
-	{
-		if (current->cmd)
-			print_tab(current->cmd);
-		if (current->execve_args)
-			print_tab(current->execve_args);
-		current = current->next;
-	}
+		exec_cmd_lst(&cmds, envp, outfile);
+    close(outfile);
+	// while (current)
+	// {
+	// 	if (current->cmd)
+	// 		print_tab(current->cmd);
+	// 	if (current->execve_args)
+	// 		print_tab(current->execve_args);
+	// 	current = current->next;
+	// }
 	// path = check_cmd(path, cmd[0]);
 	// if (!path)
 	// {
