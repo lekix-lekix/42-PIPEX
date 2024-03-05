@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/04 18:56:53 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/05 16:06:06 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,9 +166,7 @@ int	tab_size(char **tab)
 t_cmd	*create_cmd_node(char **arg)
 {
 	t_cmd	*node;
-	int		i;
 
-	i = 0;
 	node = malloc(sizeof(t_cmd));
 	if (!node)
 		return (NULL);
@@ -224,9 +222,9 @@ t_cmd	*create_cmd_lst(char **argv, int args_nb)
 
 	i = -1;
 	cmd_lst = NULL;
-	while (++i < args_nb - 1)
+	while (++i < args_nb - 1) // a verifier pourquoi args_nb - 1
 	{
-        printf("args nb %d\n", args_nb);
+		printf("args nb %d\n", args_nb);
 		// printf("arg = %s\n", argv[i]);
 		arg = ft_split(argv[i], ' ');
 		if (!arg)
@@ -308,6 +306,8 @@ void	print_tab(char **tab)
 	int	i;
 
 	i = 0;
+	if (!tab)
+		return ;
 	while (tab[i])
 	{
 		if (tab[i])
@@ -330,136 +330,146 @@ int	check_failed_alloc(t_cmd **lst)
 	return (0);
 }
 
-int ft_list_size(t_cmd **lst)
+int	ft_list_size(t_cmd **lst)
 {
-    t_cmd   *current;
-    int     i;
+	t_cmd	*current;
+	int		i;
 
-    i = 0;
-    current = *lst;
-    while (current)
-    {
-        i++;
-        current = current->next;
-    }
-    return (i);
+	i = 0;
+	current = *lst;
+	while (current)
+	{
+		i++;
+		current = current->next;
+	}
+	return (i);
 }
 
-int **alloc_int_tab(int size, int int_nb)
+int	**alloc_int_tab(int size, int int_nb)
 {
-    int **tab;
-    int i;
+	int	**tab;
+	int	i;
 
-    i = -1;
-    tab = malloc(sizeof(int *) * size);
-    if (!tab)
-        return (NULL);
-    while (++i < size)
-    {
-        tab[i] = malloc(sizeof(int) * int_nb);
-        if (!tab[i])
-            return (NULL);
-    }
-    return (tab);
+	i = -1;
+	tab = malloc(sizeof(int *) * size);
+	if (!tab)
+		return (NULL);
+	while (++i < size)
+	{
+		tab[i] = malloc(sizeof(int) * int_nb);
+		if (!tab[i])
+			return (NULL);
+	}
+	return (tab);
 }
 
-int init_first_child(t_cmd *current, char **envp, int *pipe)
+int	init_first_child(t_cmd *current, char **envp, int *pipe, int infile)
 {
-    int pid;
+	int	pid;
 
-    pid = fork();
-    if (pid == -1)
-        return (-1);
-    if (pid == 0)
-    {
-        close(pipe[0]);
-        if (dup2(pipe[1], 1) == -1)
-            return (-1);
-        close(pipe[1]);
-        if (execve(current->execve_args[0], current->execve_args, envp) == -1)
-            return (-1);   
-    }
-    return (pid);
+	pid = fork();
+	if (pid == -1)
+		return (-1);
+	if (pid == 0)
+	{
+		if (!current->execve_args)
+		{
+			ft_printf("%s: command not found\n", current->cmd[0]);
+			return (-1);
+		}
+		close(pipe[0]);
+		if (dup2(infile, 0) == -1)
+			return (-1);
+		if (dup2(pipe[1], 1) == -1)
+			return (-1);
+		close(pipe[1]);
+		if (execve(current->execve_args[0], current->execve_args, envp) == -1)
+			return (-1);
+	}
+	return (pid);
 }
 
-int init_last_child(t_cmd *current, char **envp, int *pipe, int outfile)
+int	init_last_child(t_cmd *current, char **envp, int *pipe, int outfile)
 {
-    int pid;
-    
-    pid = fork();
-    if (pid == -1)
-        return (-1);
-    if (pid == 0)
-    {
-        if (dup2(pipe[0], 0) == -1)
-            return (-1);
-        if (dup2(outfile, 1) == -1)
-            return (-1);
-        close(pipe[0]);
-        close(pipe[1]);
-        if (execve(current->execve_args[0], current->execve_args, envp) == -1)
-            return (-1);
-    }
-    return (pid);
+	int	pid;
+
+	pid = fork();
+	if (pid == -1)
+		return (-1);
+	if (pid == 0)
+	{
+		if (!(current->execve_args))
+		{
+			ft_printf("%s: command not found\n", current->cmd[0]);
+			return (-1);
+		}
+		if (dup2(pipe[0], 0) == -1)
+			return (-1);
+		if (dup2(outfile, 1) == -1)
+			return (-1);
+		close(pipe[0]);
+		close(pipe[1]);
+		if (execve(current->execve_args[0], current->execve_args, envp) == -1)
+			return (-1);
+	}
+	return (pid);
 }
 
-int	exec_cmd_lst(t_cmd **lst, char **envp, int outfile)
+int	wait_all_pid(int *pids, int count)
+{
+	int	status;
+	int	i;
+
+	i = -1;
+	while (++i < count)
+	{
+		printf("waiting pid %d\n", pids[i]);
+		waitpid(pids[i], &status, WUNTRACED); // to protect ?
+	}
+	return (status);
+}
+
+int	exec_cmd_lst(t_cmd **lst, char **envp, int infile, int outfile)
 {
 	t_cmd	*current;
 	int		**pipe_fds;
-    int     *pid;
-    int     i;
+	int		*pids;
+	int		i;
 
 	current = *lst;
-    pipe_fds = alloc_int_tab(ft_list_size(lst), 2);
-    if (!pipe_fds)
-        return (-1);
-    pid = malloc(sizeof(int) * (ft_list_size(lst)));
-    if (!pid)
-        return (-1);
-    i = 0;
-    if (pipe(pipe_fds[i]) == -1)
-        return (-1);
-    while (current)
+	pipe_fds = alloc_int_tab(ft_list_size(lst), 2);
+	if (!pipe_fds)
+		return (-1);
+	pids = malloc(sizeof(int) * (ft_list_size(lst)));
+	if (!pids)
+		return (-1);
+	i = 0;
+	if (pipe(pipe_fds[i]) == -1)
+		return (-1);
+	while (current)
 	{
-        printf("current %s\n", current->execve_args[0]);
-  
-        if (i == 0)
-            pid[i] = init_first_child(current, envp, pipe_fds[0]);
-        if (!current->next)
-            pid[i] = init_last_child(current, envp, pipe_fds[0], outfile);
-        i++;
-        current = current->next;
-        // pid = fork();
-        // printf("pid = %d\n", pid);
-        //     printf("curr->exec[0] = %s\n", current->execve_args[0]);
-        // if (pid == 0)
-        // {
-        //     close(pipe_fds[0]);
-        //     dup2(pipe_fds[1], 1);
-        //     if (execve(current->execve_args[0], current->execve_args, envp) == -1)
-        //         printf("execve pb\n");
-        // }
-        // pid = fork();
-        // if (pid == 0)
-        // {
-        //    close(pipe_fds[1]);
-        //    dup2(pipe_fds[0], 0);
-        //     dup2(outfile, 1);
-        //    current = current->next;
-        //    execve(current->execve_args[0], current->execve_args, envp);
-    }
-    close(pipe_fds[0][1]);
-    close(pipe_fds[0][0]);
-    return (0);
+		// printf("current %s\n", current->execve_args[0]);
+		if (i == 0)
+			pids[i] = init_first_child(current, envp, pipe_fds[0], infile);
+		if (!current->next)
+			pids[i] = init_last_child(current, envp, pipe_fds[0], outfile);
+		printf("pid[%d] = %d\n", i, pids[i]);
+		i++;
+		current = current->next;
+	}
+	close(pipe_fds[0][0]);
+	close(pipe_fds[0][1]);
+	wait_all_pid(pids, i);
+	return (0);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
-	char	*path;
-	int		outfile;
 	t_cmd	*cmds;
 	t_cmd	*current;
+	char	*path;
+	int		outfile;
+	int		infile;
 
 	// char	**cmd;
 	// int		pipe_fds[2];
@@ -468,9 +478,13 @@ int	main(int argc, char **argv, char **envp)
 	// char	read_child[200];
 	// int		saved_stdin;
 	if (access(argv[1], R_OK) == -1)
-		bash_return_error(argv[1], NULL); // should not return
+		bash_return_error(argv[1], NULL);
+	infile = open(argv[1], O_RDONLY);
 	if (access(argv[argc - 1], R_OK) == -1)
-		outfile = open(argv[argc - 1], O_WRONLY | O_APPEND | O_CREAT, 0777); // need protection
+		outfile = open(argv[argc - 1], O_WRONLY | O_APPEND | O_CREAT, 0777);
+	else
+		outfile = open(argv[argc - 1], O_RDWR);
+	// need protection
 	path = get_path(envp);
 	if (!path)
 		return (-1); // need free close whatever
@@ -479,15 +493,15 @@ int	main(int argc, char **argv, char **envp)
 		return (-1); // need free close whatever
 	current = cmds;
 	check_cmds(&cmds, path);
-   while (current)
-    {
-        print_tab(current->execve_args);
-        current = current->next;
-    }
-    printf("coucou\n");
+	while (current)
+	{
+		print_tab(current->execve_args);
+		current = current->next;
+	}
+	printf("coucou\n");
 	if (!check_failed_alloc(&cmds))
-		exec_cmd_lst(&cmds, envp, outfile);
-    close(outfile);
+		exec_cmd_lst(&cmds, envp, infile, outfile);
+	// close(outfile);
 	// while (current)
 	// {
 	// 	if (current->cmd)
