@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/05 18:29:36 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/06 17:32:33 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,7 @@ char	*bash_error_cat(char *filename)
 	if (!str)
 		return (NULL);
 	ft_strlcpy(str, "bash: ", 7);
-	ft_strlcat(str, filename, filename_len + 6);
+	ft_strlcat(str, filename, filename_len + 7);
 	return (str);
 }
 
@@ -371,25 +371,34 @@ int	init_first_child(t_cmd *current, t_data *args_env, int *pipe)
 		return (-1);
 	if (pid == 0)
 	{
+        printf("first !\n");
 		close(pipe[0]);
-		infile = open(args_env->argv[0], O_RDONLY);
+		infile = open(args_env->argv[0], O_RDONLY); // need protection
 		if (infile == -1)
-			return (bash_return_error(args_env->argv[0], NULL));
+        {
+			bash_return_error(args_env->argv[0], NULL);
+            exit(-1);
+        }
 		if (!current->execve_args)
-			return (ft_printf("%s: command not found\n", current->cmd[0]));
+        {
+			ft_printf("%s: command not found\n", current->cmd[0]);
+            exit(-1);
+        }
 		if (dup2(infile, 0) == -1)
 			return (-1);
 		if (dup2(pipe[1], 1) == -1)
 			return (-1);
+        close(pipe[0]);
 		close(pipe[1]);
+        close(infile);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
 	}
-	return (pid);
+    return (pid);
 }
 
-int	init_last_child(t_cmd *current, t_data *args_env, int *pipe)
+int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 {
 	int	pid;
 	int	outfile;
@@ -399,27 +408,71 @@ int	init_last_child(t_cmd *current, t_data *args_env, int *pipe)
 		return (-1);
 	if (pid == 0)
 	{
-		if (access(args_env->argv[args_env->argc], R_OK) == -1)
-			outfile = open(args_env->argv[args_env->argc],
-					O_WRONLY | O_APPEND | O_CREAT, 0777);
-        else
-            ft_printf("%s: cannot overwrite file\n", bash_error_cat(args_env->argv[args_env->argc]));
+        printf("last! i = %d\n", i);
+        printf("outfile = %s\n", args_env->argv[args_env->argc - 2]);
+		outfile = open(args_env->argv[args_env->argc - 2], O_WRONLY | O_TRUNC | O_CREAT, 0777);
+        printf("outfile fd = %d\n", outfile);
 		if (!(current->execve_args))
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]);
-			return (-1);
+			ft_printf("%s: command not found\n", current->cmd[0]); // close pipe ?
+			exit(-1);
 		}
-		if (dup2(pipe[0], 0) == -1)
+		if (dup2(pipes[i - 1][0], 0) == -1)
 			return (-1);
-		if (dup2(outfile, 1) == -1)
-			return (-1);
-		close(pipe[0]);
-		close(pipe[1]);
+        printf("pipe i - 1[0] = %d\n", pipes[i-1][0]);
+        if (dup2(outfile, 1) == -1)
+            return (-1);
+		close(pipes[i - 1][0]);
+		close(pipes[i - 1][1]);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
 	}
-	return (pid);
+    close(pipes[i - 1][0]);
+    close(pipes[i - 1][1]);
+    return (pid);
+}
+
+int     init_child(t_cmd *current, t_data *args_env, int **pipes, int i)
+{
+    int pid;
+
+    if (pipe(pipes[i]) == -1)
+        return (-1);
+    printf("pipes = %d %d\n", pipes[i - 1][0], pipes[i][1]);
+    pid = fork();
+    if (pid == -1)
+        return (-1);
+    if (pid == 0)
+    {
+        printf("middle, i = %d\n", i);
+        close(pipes[i][0]);
+        if (!(current->execve_args))
+        {
+            ft_printf("%s: command not found\n", current->cmd[0]); // close pipe ?
+			exit(-1);
+        }
+        if (dup2(pipes[i - 1][0], 0) == -1)
+            return (-1);
+        if (dup2(pipes[i][1], 1) == -1)
+            return (-1);
+        close(pipes[i - 1][0]);
+        close(pipes[i][1]);
+        if (execve(current->execve_args[0], current->execve_args, args_env->envp) == -1)
+            return (-1);
+    }
+    close(pipes[i - 1][0]);
+    close(pipes[i - 1][1]);
+    return (pid);
+}
+
+void    print_pids(int *pids)
+{
+    int i;
+
+    i = -1;
+    while (pids[++i])
+        printf("print pid = %d\n", pids[i]);
 }
 
 int	wait_all_pid(int *pids, int count)
@@ -441,26 +494,31 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	int		i;
 
 	current = *lst;
-	pipe_fds = alloc_int_tab(ft_list_size(lst), 2);
+	pipe_fds = alloc_int_tab(ft_list_size(lst), 2); // pas bon, si > 2 -> lst_size - 1
 	if (!pipe_fds)
 		return (-1);
 	pids = malloc(sizeof(int) * (ft_list_size(lst)));
 	if (!pids)
 		return (-1);
 	i = 0;
-	if (pipe(pipe_fds[i]) == -1)
+    if (pipe(pipe_fds[0]) == -1)
 		return (-1);
 	while (current)
 	{
 		if (i == 0)
-			pids[i] = init_first_child(current, args_env, pipe_fds[0]);
-		if (!current->next)
-			pids[i] = init_last_child(current, args_env, pipe_fds[0]);
+			pids[i] = init_first_child(current, args_env, pipe_fds[i]);
+		else if (!current->next)
+			pids[i] = init_last_child(current, args_env, pipe_fds, i);
+        else
+            pids[i] = init_child(current, args_env, pipe_fds, i);
 		i++;
 		current = current->next;
 	}
-	close(pipe_fds[0][0]);
-	close(pipe_fds[0][1]);
+    print_pids(pids);
+	// close(pipe_fds[0][0]);
+	// close(pipe_fds[0][1]);
+    // close(pipe_fds[1][0]);
+    // close(pipe_fds[1][1]);
 	wait_all_pid(pids, i);
 	return (0);
 }
@@ -471,18 +529,18 @@ int	main(int argc, char **argv, char **envp)
 	t_data	args_env;
 	char	*path;
 
-	// t_cmd	*current;
+	t_cmd	*current;
 	path = get_path(envp);
 	if (!path)
 		return (-1); // need free close whatever
 	cmds = create_cmd_lst(argv + 2, argc - 2);
 	if (!cmds)
 		return (-1); // need free close whatever
-	// current = cmds;
+	current = cmds;
 	check_cmds(&cmds, path);
-	args_env.argc = argc - 1;
+	args_env.argc = argc;
 	args_env.argv = argv + 1;
-	args_env.envp = envp;
+	args_env.envp = envp; 
 	// while (current)
 	// {
 	// 	print_tab(current->execve_args);
