@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/29 15:20:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/05 18:16:28 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/07 16:38:46 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ typedef struct s_data
     char            **argv;
     char            **envp;
     int             argc;
+    int             infile;
+    int             outfile;
 }                   t_data;
 
 # include "./42-MEGALIBFT/megalibft.h"
