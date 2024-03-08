@@ -6,32 +6,32 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/07 18:39:55 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/08 18:24:02 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "./pipex.h"
 
-int ft_free_int_tab(int **tab)
+int	ft_free_int_tab(int **tab)
 {
-    int i;
+	int	i;
 
-    i = -1;
-    while (tab[++i])
-        free(tab[i]);
-    free(tab);
-    return (0);
+	i = -1;
+	while (tab[++i])
+		free(tab[i]);
+	free(tab);
+	return (0);
 }
 
-int ft_free_char_tab(char **tab)
+int	ft_free_char_tab(char **tab)
 {
-    int i;
+	int	i;
 
-    i = -1;
-    while (tab[++i])
-        free(tab[i]);
-    free(tab);
-    return (0);
+	i = -1;
+	while (tab[++i])
+		free(tab[i]);
+	free(tab);
+	return (0);
 }
 
 int	ft_free_tab(void **tab)
@@ -49,6 +49,38 @@ int	ft_free_str(char *str)
 {
 	free(str);
 	return (-1);
+}
+
+int	free_cmd_lst(t_cmd **lst)
+{
+	t_cmd	*current;
+	t_cmd	*next;
+	int		i;
+
+	current = *lst;
+	while (current)
+	{
+		i = -1;
+		while (current && current->cmd[++i])
+        {
+			free(current->cmd[i]);
+            current->cmd[i] = NULL;
+        }
+		if (current->cmd)
+			free(current->cmd);
+		i = -1;
+		while (current->execve_args && current->execve_args[++i])
+        {
+			free(current->execve_args[i]);
+            current->execve_args[i] = NULL;
+        }
+		if (current->execve_args)
+			free(current->execve_args);
+		next = current->next;
+		free(current);
+		current = next;
+	}
+	return (0);
 }
 
 char	*add_slash(char *str)
@@ -81,6 +113,13 @@ char	*check_cmd(t_cmd *node, char *path)
 	int		i;
 
 	i = -1;
+	if (access(node->cmd[0], X_OK) == 0)
+    {
+        cmd_test = ft_strdup(node->cmd[0]);
+        if (!cmd_test)
+            return (NULL);
+        return (cmd_test);
+    }
 	paths = ft_split(path, ':');
 	if (!paths)
 		return (set_alloc_err(node));
@@ -101,10 +140,11 @@ char	*check_cmd(t_cmd *node, char *path)
 		}
 		ft_strlcpy(path_test, paths[i], ft_strlen(paths[i]) + 1);
 		ft_strlcat(path_test, cmd_test, s_len);
+		printf("cmd test = %s\n", cmd_test);
 		if (access(path_test, X_OK) == 0)
 		{
 			free(cmd_test);
-	        ft_free_tab((void **)paths);
+			ft_free_tab((void **)paths);
 			return (path_test);
 		}
 		free(path_test);
@@ -294,7 +334,7 @@ char	**create_execve_args(t_cmd *node, char *cmd_path)
 			return (NULL);
 		}
 	}
-    args[3] = NULL;
+	args[3] = NULL;
 	return (args);
 }
 
@@ -376,11 +416,11 @@ int	**alloc_int_tab(int size, int int_nb)
 		if (!tab[i])
 			return (NULL);
 	}
-    tab[i] = NULL;
+	tab[i] = NULL;
 	return (tab);
 }
 
-int	init_first_child(t_cmd *current, t_data *args_env, int *pipe)
+int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
 {
 	int	pid;
 
@@ -389,23 +429,30 @@ int	init_first_child(t_cmd *current, t_data *args_env, int *pipe)
 		return (-1);
 	if (pid == 0)
 	{
-		close(pipe[0]);
+		printf("first child\n");
+		close(pipes[0][0]);
 		if (args_env->infile == -1)
 		{
 			bash_return_error(args_env->argv[0], NULL);
+			free_cmd_lst(args_env->cmd_lst);
+			ft_free_tab((void **)pipes);
 			exit(-1);
 		}
 		if (!current->execve_args)
 		{
 			ft_printf("%s: command not found\n", current->cmd[0]);
+			free_cmd_lst(args_env->cmd_lst);
+			ft_free_tab((void **)pipes);
+			free(args_env->pids);
+			free(args_env->path);
 			exit(-1);
 		}
 		if (dup2(args_env->infile, 0) == -1)
 			return (-1);
-		if (dup2(pipe[1], 1) == -1)
+		if (dup2(pipes[0][1], 1) == -1)
 			return (-1);
-		close(pipe[0]);
-		close(pipe[1]);
+		close(pipes[0][0]);
+		close(pipes[0][1]);
 		close(args_env->infile);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
@@ -417,13 +464,14 @@ int	init_first_child(t_cmd *current, t_data *args_env, int *pipe)
 int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 {
 	int	pid;
-	// int	outfile;
 
+	// int	outfile;
 	pid = fork();
 	if (pid == -1)
 		return (-1);
 	if (pid == 0)
 	{
+		printf("last child\n");
 		if (args_env->outfile == -1)
 		{
 			bash_return_error(args_env->argv[0], NULL);
@@ -431,7 +479,8 @@ int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 		}
 		if (!(current->execve_args))
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]); // close pipe !
+			ft_printf("%s: command not found\n", current->cmd[0]);
+				// close pipe !
 			exit(-1);
 		}
 		if (dup2(pipes[i - 1][0], 0) == -1)
@@ -460,10 +509,12 @@ int	init_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 		return (-1);
 	if (pid == 0)
 	{
+		printf("middle child\n");
 		close(pipes[i][0]);
 		if (!(current->execve_args))
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]); // close pipe !
+			ft_printf("%s: command not found\n", current->cmd[0]);
+				// close pipe !
 			exit(-1);
 		}
 		if (dup2(pipes[i - 1][0], 0) == -1)
@@ -498,25 +549,26 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	t_cmd	*current;
 	int		**pipe_fds;
 	int		*pids;
-    int     lst_size;
+	int		lst_size;
 	int		i;
 
 	current = *lst;
-    printf("lst size = %d\n", ft_list_size(lst));
-    lst_size = ft_list_size(lst);
+	printf("lst size = %d\n", ft_list_size(lst));
+	lst_size = ft_list_size(lst);
 	pipe_fds = alloc_int_tab(lst_size, 2); // pas bon, si > 2-> lst_size - 1
 	if (!pipe_fds)
 		return (-1);
 	pids = malloc(sizeof(int) * lst_size);
 	if (!pids)
 		return (-1);
+	args_env->pids = pids;
 	i = 0;
 	if (pipe(pipe_fds[0]) == -1)
 		return (-1);
 	while (current)
 	{
 		if (i == 0)
-			pids[i] = init_first_child(current, args_env, pipe_fds[i]);
+			pids[i] = init_first_child(current, args_env, pipe_fds);
 		else if (!current->next)
 			pids[i] = init_last_child(current, args_env, pipe_fds, i);
 		else
@@ -528,61 +580,67 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	// close(pipe_fds[0][1]);
 	// close(pipe_fds[1][0]);
 	// close(pipe_fds[1][1]);
-	wait_all_pid(pids, i);
-    ft_free_tab((void **)pipe_fds);
-    free(pids);
+	printf("i = %d\n", i);
+	wait_all_pid(pids, ft_list_size(lst));
+	ft_free_tab((void **)pipe_fds);
+	free(pids);
 	return (0);
+}
+
+char    *create_filename(void)
+{
+    char *filename;
+    char name[10];
+    int  fd;
+
+    filename = malloc(sizeof(char) * 16);
+    if (!filename)
+        return (NULL);
+    fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1)
+        return (NULL);
+    ft_strlcpy(filename, "/tmp/", 6);
+    printf("filename = %s\n", filename);
+    read(fd, name, 10);
+    ft_strlcat(filename, name, 15);
+    printf("filename = %s\n", filename);
+    return (filename);
 }
 
 int	handle_here_doc(t_cmd **cmd_lst, t_data *args_env)
 {
-    char *line;
-    size_t limiter_len;
+	char	*line;
+    char    *filename;
+	size_t	limiter_len;
 
-    (void) cmd_lst;
-    line = NULL;
-    limiter_len = ft_strlen(args_env->argv[1]);
-	args_env->infile = open("./", __O_TMPFILE | O_RDWR); // to protect
+	(void)cmd_lst;
+	line = NULL;
+	limiter_len = ft_strlen(args_env->argv[1]);
+    filename = create_filename();
+    args_env->infile = open(filename, O_RDWR | O_CREAT, 0777); 
     args_env->outfile = open(args_env->argv[args_env->argc - 2], O_WRONLY | O_APPEND | O_CREAT, 0777);
-    while (1)
-    {
-        ft_printf("> ");
-        line = get_next_line(0, 0);
-        if (!line)
-            return (-1);
-        write(args_env->infile, line, ft_strlen(line));
-        if (ft_strlen(line) - 1 == limiter_len && !ft_strncmp(line, args_env->argv[1], limiter_len))
-            break;
-    }
-    get_next_line(0, 1);
-    *cmd_lst = create_cmd_lst(args_env->argv + 2, 3);
-    return (0);
-}
-
-int free_cmd_lst(t_cmd **lst)
-{
-    t_cmd   *current;
-    t_cmd   *next;
-    int     i;
-
-    current = *lst;
-    while (current)
-    {
-        i = -1;
-        while (current->cmd[++i])
-            free(current->cmd[i]);
-        if (current->cmd)
-            free(current->cmd);
-        i = -1;
-        while (current->execve_args[++i])
-            free(current->execve_args[i]);
-        if (current->execve_args)
-            free(current->execve_args);
-        next = current->next;
-        free(current);
-        current = next;
-    }
-    return (0);
+    dup2(args_env->infile, 0);
+	while (1)                                                       // add EOF support
+	{
+		ft_printf("> ");
+		line = get_next_line(0, 0);
+		if (!line)
+			return (-1);
+		printf("write = %zd\n", write(0, line, ft_strlen(line)));
+		if (ft_strlen(line) - 1 == limiter_len && !ft_strncmp(line,
+				args_env->argv[1], limiter_len))
+			break ;
+		free(line);
+	}
+	free(line);
+	*cmd_lst = create_cmd_lst(args_env->argv + 2, 3);
+    close(args_env->infile);
+    int fd = open(filename, O_RDONLY);
+    printf("infile = %d\n", args_env->infile);
+    printf("%s\n", get_next_line(fd, 0));
+    printf("%s\n", get_next_line(fd, 0));
+    printf("%s\n", get_next_line(fd, 0));
+	return (0);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -594,27 +652,30 @@ int	main(int argc, char **argv, char **envp)
 	path = get_path(envp);
 	if (!path)
 		return (-1); // need free close whatever
+	args_env.path = path;
 	args_env.argc = argc;
 	args_env.argv = argv + 1;
 	args_env.envp = envp;
 	if (argc == 6 && !ft_strncmp(argv[1], "here_doc", 8))
 		handle_here_doc(&cmd_lst, &args_env);
-    else
-    {
-		args_env.infile = open(argv[1], O_RDONLY); // need protection
-        args_env.outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC | O_CREAT, 0777); // need protection
-        cmd_lst = create_cmd_lst(argv + 2, argc - 2);
-    	if (!cmd_lst)
-	    	return (-1); // need free close whatever
-    }
+	else
+	{
+		args_env.infile = open(argv[1],
+				O_RDONLY);                                   // need protection
+		args_env.outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC | O_CREAT,
+				0777); // need protection
+		cmd_lst = create_cmd_lst(argv + 2, argc - 2);
+		if (!cmd_lst)
+			return (-1); // need free close whatever
+	}
+	args_env.cmd_lst = &cmd_lst;
 	check_cmds(&cmd_lst, path);
 	if (!check_failed_alloc(&cmd_lst))
 		exec_cmd_lst(&cmd_lst, &args_env);
-    close(args_env.infile);
-    close(args_env.outfile);
-    free_cmd_lst(&cmd_lst);
-    free(path);
+	close(args_env.infile);
+	close(args_env.outfile);
+	free_cmd_lst(&cmd_lst);
+	free(path);
 }
-
 
 // ! : absolute paths
