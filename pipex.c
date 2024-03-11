@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/08 18:24:02 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/11 18:29:20 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,18 +62,18 @@ int	free_cmd_lst(t_cmd **lst)
 	{
 		i = -1;
 		while (current && current->cmd[++i])
-        {
+		{
 			free(current->cmd[i]);
-            current->cmd[i] = NULL;
-        }
+			current->cmd[i] = NULL;
+		}
 		if (current->cmd)
 			free(current->cmd);
 		i = -1;
 		while (current->execve_args && current->execve_args[++i])
-        {
+		{
 			free(current->execve_args[i]);
-            current->execve_args[i] = NULL;
-        }
+			current->execve_args[i] = NULL;
+		}
 		if (current->execve_args)
 			free(current->execve_args);
 		next = current->next;
@@ -113,13 +113,15 @@ char	*check_cmd(t_cmd *node, char *path)
 	int		i;
 
 	i = -1;
+	if (!node->cmd[0][0])
+		return (NULL);
 	if (access(node->cmd[0], X_OK) == 0)
-    {
-        cmd_test = ft_strdup(node->cmd[0]);
-        if (!cmd_test)
-            return (NULL);
-        return (cmd_test);
-    }
+	{
+		cmd_test = ft_strdup(node->cmd[0]);
+		if (!cmd_test)
+			return (NULL);
+		return (cmd_test);
+	}
 	paths = ft_split(path, ':');
 	if (!paths)
 		return (set_alloc_err(node));
@@ -140,7 +142,6 @@ char	*check_cmd(t_cmd *node, char *path)
 		}
 		ft_strlcpy(path_test, paths[i], ft_strlen(paths[i]) + 1);
 		ft_strlcat(path_test, cmd_test, s_len);
-		printf("cmd test = %s\n", cmd_test);
 		if (access(path_test, X_OK) == 0)
 		{
 			free(cmd_test);
@@ -274,6 +275,47 @@ char	*ft_strjoin_space(char const *s1, char const *s2)
 	return (final_str);
 }
 
+int	str_is_only_spaces(char *str)
+{
+	int	i;
+
+	i = 0;
+	while ((str[i] >= 9 && str[i] <= 13) || str[i] == 32)
+		i++;
+	if (!str[i])
+		return (1);
+	return (0);
+}
+
+char	**create_null_arg(void)
+{
+	char	**arg;
+
+	arg = malloc(sizeof(char *) * 2);
+	if (!arg)
+		return (NULL);
+	arg[0] = malloc(sizeof(char));
+	if (!arg[0])
+		return (NULL);
+	arg[1] = NULL;
+	arg[0][0] = '\0';
+	return (arg);
+}
+
+char	**copy_arg(char *argv)
+{
+	char	**arg;
+
+	arg = malloc(sizeof(char *) * 2);
+	if (!arg)
+		return (NULL);
+	arg[0] = ft_strdup(argv);
+	if (!arg[0])
+		return (NULL);
+	arg[1] = NULL;
+	return (arg);
+}
+
 t_cmd	*create_cmd_lst(char **argv, int args_nb)
 {
 	t_cmd	*cmd_lst;
@@ -285,7 +327,12 @@ t_cmd	*create_cmd_lst(char **argv, int args_nb)
 	cmd_lst = NULL;
 	while (++i < args_nb - 1) // a verifier pourquoi args_nb - 1
 	{
-		arg = ft_split(argv[i], ' ');
+		if (!ft_strlen(argv[i]))
+			arg = create_null_arg();
+		else if (str_is_only_spaces(argv[i]))
+			arg = copy_arg(argv[i]);
+		else
+			arg = ft_split(argv[i], ' ');
 		if (!arg)
 			return (NULL);
 		node = create_cmd_node(arg);
@@ -429,7 +476,7 @@ int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
 		return (-1);
 	if (pid == 0)
 	{
-		printf("first child\n");
+		// printf("first child\n");
 		close(pipes[0][0]);
 		if (args_env->infile == -1)
 		{
@@ -440,7 +487,8 @@ int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
 		}
 		if (!current->execve_args)
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]);
+			ft_putstr_fd(current->cmd[0], 2);
+			ft_putstr_fd(": command not found\n", 2);
 			free_cmd_lst(args_env->cmd_lst);
 			ft_free_tab((void **)pipes);
 			free(args_env->pids);
@@ -471,7 +519,7 @@ int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 		return (-1);
 	if (pid == 0)
 	{
-		printf("last child\n");
+		// printf("last child\n");
 		if (args_env->outfile == -1)
 		{
 			bash_return_error(args_env->argv[0], NULL);
@@ -479,8 +527,12 @@ int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 		}
 		if (!(current->execve_args))
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]);
-				// close pipe !
+		    ft_putstr_fd(current->cmd[0], 2);
+			ft_putstr_fd(": command not found\n", 2);
+			free_cmd_lst(args_env->cmd_lst);
+			ft_free_tab((void **)pipes);
+			free(args_env->pids);
+			free(args_env->path);
 			exit(-1);
 		}
 		if (dup2(pipes[i - 1][0], 0) == -1)
@@ -509,12 +561,16 @@ int	init_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 		return (-1);
 	if (pid == 0)
 	{
-		printf("middle child\n");
+		// printf("middle child\n");
 		close(pipes[i][0]);
 		if (!(current->execve_args))
 		{
-			ft_printf("%s: command not found\n", current->cmd[0]);
-				// close pipe !
+            ft_putstr_fd(current->cmd[0], 2);
+			ft_putstr_fd(": command not found\n", 2);
+			free_cmd_lst(args_env->cmd_lst);
+			ft_free_tab((void **)pipes);
+			free(args_env->pids);
+			free(args_env->path);
 			exit(-1);
 		}
 		if (dup2(pipes[i - 1][0], 0) == -1)
@@ -536,11 +592,12 @@ int	init_child(t_cmd *current, t_data *args_env, int **pipes, int i)
 int	wait_all_pid(int *pids, int count)
 {
 	int	status;
-	int	i;
 
-	i = -1;
-	while (++i < count)
-		waitpid(pids[i], &status, WUNTRACED); // to protect ?
+	while (count > 0)
+    {
+		wait(pids[count], &status, WUNTRACED); // to protect ?
+        count--;
+    }
 	return (status);
 }
 
@@ -580,66 +637,72 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	// close(pipe_fds[0][1]);
 	// close(pipe_fds[1][0]);
 	// close(pipe_fds[1][1]);
-	printf("i = %d\n", i);
 	wait_all_pid(pids, ft_list_size(lst));
 	ft_free_tab((void **)pipe_fds);
 	free(pids);
 	return (0);
 }
 
-char    *create_filename(void)
+char	*create_random_filename(void)
 {
-    char *filename;
-    char name[10];
-    int  fd;
+	char	*filename;
+	char	buf[5];
+	int		fd;
+	int		i;
 
-    filename = malloc(sizeof(char) * 16);
-    if (!filename)
-        return (NULL);
-    fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1)
-        return (NULL);
-    ft_strlcpy(filename, "/tmp/", 6);
-    printf("filename = %s\n", filename);
-    read(fd, name, 10);
-    ft_strlcat(filename, name, 15);
-    printf("filename = %s\n", filename);
-    return (filename);
+	filename = malloc(sizeof(char) * 16);
+	if (!filename)
+		return (NULL);
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd == -1)
+		return (NULL);
+	ft_strlcpy(filename, "/tmp/", 6);
+	printf("filename = %s\n", filename);
+	i = 0;
+	while (i < 4)
+	{
+		read(fd, buf + i, 1);
+		if (ft_isalnum(buf[i]))
+			i++;
+	}
+	buf[i] = '\0';
+	ft_strlcat(filename, buf, 15);
+	printf("filename = %s\n", filename);
+	return (filename);
 }
 
 int	handle_here_doc(t_cmd **cmd_lst, t_data *args_env)
 {
 	char	*line;
-    char    *filename;
+	char	*filename;
 	size_t	limiter_len;
+	int		fd;
 
 	(void)cmd_lst;
 	line = NULL;
 	limiter_len = ft_strlen(args_env->argv[1]);
-    filename = create_filename();
-    args_env->infile = open(filename, O_RDWR | O_CREAT, 0777); 
-    args_env->outfile = open(args_env->argv[args_env->argc - 2], O_WRONLY | O_APPEND | O_CREAT, 0777);
-    dup2(args_env->infile, 0);
-	while (1)                                                       // add EOF support
+	filename = create_random_filename();
+	args_env->infile = open(filename, O_RDWR | O_CREAT, 0777);
+	args_env->outfile = open(args_env->argv[args_env->argc - 2],
+			O_WRONLY | O_APPEND | O_CREAT, 0777);
+	while (1) // add EOF support
 	{
 		ft_printf("> ");
 		line = get_next_line(0, 0);
 		if (!line)
 			return (-1);
-		printf("write = %zd\n", write(0, line, ft_strlen(line)));
 		if (ft_strlen(line) - 1 == limiter_len && !ft_strncmp(line,
 				args_env->argv[1], limiter_len))
 			break ;
+		write(args_env->infile, line, ft_strlen(line));
 		free(line);
 	}
 	free(line);
-	*cmd_lst = create_cmd_lst(args_env->argv + 2, 3);
-    close(args_env->infile);
-    int fd = open(filename, O_RDONLY);
-    printf("infile = %d\n", args_env->infile);
-    printf("%s\n", get_next_line(fd, 0));
-    printf("%s\n", get_next_line(fd, 0));
-    printf("%s\n", get_next_line(fd, 0));
+	close(args_env->infile);
+	fd = open(filename, O_RDONLY);
+	if (fd == -1)
+		return (-1);
+	*cmd_lst = create_cmd_lst(args_env->argv + 2, args_env->argc - 3);
 	return (0);
 }
 
@@ -649,6 +712,8 @@ int	main(int argc, char **argv, char **envp)
 	t_data	args_env;
 	char	*path;
 
+	// t_cmd	*current;
+	// int		i;
 	path = get_path(envp);
 	if (!path)
 		return (-1); // need free close whatever
@@ -656,18 +721,34 @@ int	main(int argc, char **argv, char **envp)
 	args_env.argc = argc;
 	args_env.argv = argv + 1;
 	args_env.envp = envp;
-	if (argc == 6 && !ft_strncmp(argv[1], "here_doc", 8))
+	if (!ft_strncmp(argv[1], "here_doc", 8))
 		handle_here_doc(&cmd_lst, &args_env);
 	else
 	{
 		args_env.infile = open(argv[1],
-				O_RDONLY);                                   // need protection
+								O_RDONLY); // need protection
+											// check for rights
 		args_env.outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC | O_CREAT,
-				0777); // need protection
+								0777); // need protection
 		cmd_lst = create_cmd_lst(argv + 2, argc - 2);
 		if (!cmd_lst)
+		{
+			printf("uo laa aone\n");
 			return (-1); // need free close whatever
+		}
 	}
+	printf("lst size = %d\n", ft_list_size(&cmd_lst));
+	// current = cmd_lst;
+	// while (current)
+	// {
+	// 	i = 0;
+	// 	while (current->cmd[i])
+	// 	{
+	// 		printf("%s\n", current->cmd[i]);
+	// 		i++;
+	// 	}
+	// 	current = current->next;
+	// }
 	args_env.cmd_lst = &cmd_lst;
 	check_cmds(&cmd_lst, path);
 	if (!check_failed_alloc(&cmd_lst))
