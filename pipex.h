@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/29 15:20:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/08 18:19:01 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/12 16:22:39 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ typedef struct s_data
     char            **argv;
     char            **envp;
     t_cmd           **cmd_lst;
+    int             **pipes;
     char            *path;
     int             *pids;
     int             argc;

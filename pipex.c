@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/11 18:29:20 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/12 16:57:19 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -467,7 +467,7 @@ int	**alloc_int_tab(int size, int int_nb)
 	return (tab);
 }
 
-int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
+int	init_first_child(t_cmd *current, t_data *args_env)
 {
 	int	pid;
 
@@ -476,31 +476,33 @@ int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
 		return (-1);
 	if (pid == 0)
 	{
-		// printf("first child\n");
-		close(pipes[0][0]);
+		close(args_env->pipes[0][0]);
+		args_env->infile = open(args_env->argv[0], O_RDONLY); // need protection
 		if (args_env->infile == -1)
 		{
 			bash_return_error(args_env->argv[0], NULL);
 			free_cmd_lst(args_env->cmd_lst);
-			ft_free_tab((void **)pipes);
+			ft_free_tab((void **)args_env->pipes);
+			free(args_env->pids);
+			free(args_env->path);
 			exit(-1);
 		}
 		if (!current->execve_args)
 		{
-			ft_putstr_fd(current->cmd[0], 2);
-			ft_putstr_fd(": command not found\n", 2);
+			write(2, current->cmd[0], ft_strlen(current->cmd[0]));
+			write(2, ": command not found\n", 20);
 			free_cmd_lst(args_env->cmd_lst);
-			ft_free_tab((void **)pipes);
+			ft_free_tab((void **)args_env->pipes);
 			free(args_env->pids);
 			free(args_env->path);
 			exit(-1);
 		}
 		if (dup2(args_env->infile, 0) == -1)
 			return (-1);
-		if (dup2(pipes[0][1], 1) == -1)
+		if (dup2(args_env->pipes[0][1], 1) == -1)
 			return (-1);
-		close(pipes[0][0]);
-		close(pipes[0][1]);
+		close(args_env->pipes[0][0]);
+		close(args_env->pipes[0][1]);
 		close(args_env->infile);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
@@ -509,127 +511,174 @@ int	init_first_child(t_cmd *current, t_data *args_env, int **pipes)
 	return (pid);
 }
 
-int	init_last_child(t_cmd *current, t_data *args_env, int **pipes, int i)
+char	*outfile_error(char *cmd, char *outfile)
+{
+	char	*errno_err;
+	char	*full_error;
+	size_t	cmd_len;
+	size_t	outfile_len;
+	size_t	errno_err_len;
+
+	cmd_len = ft_strlen(cmd);
+	errno_err = strerror(errno);
+	errno_err_len = ft_strlen(errno_err);
+	outfile_len = ft_strlen(outfile);
+	full_error = malloc(sizeof(char) * (cmd_len + outfile_len + errno_err_len
+				+ 6));
+	if (!full_error)
+		return (NULL);
+	ft_strlcpy(full_error, cmd, cmd_len + 1);
+	ft_strlcat(full_error, ": ", ft_strlen(full_error) + 3);
+	ft_strlcat(full_error, outfile, ft_strlen(full_error) + outfile_len + 1);
+	ft_strlcat(full_error, ": ", ft_strlen(full_error) + 3);
+	ft_strlcat(full_error, errno_err, ft_strlen(full_error) + errno_err_len
+		+ 1);
+	ft_strlcat(full_error, "\n", ft_strlen(full_error) + 2);
+	return (full_error);
+}
+
+void	free_exit(t_data *args_env)
+{
+	free_cmd_lst(args_env->cmd_lst);
+	ft_free_tab((void **)args_env->pipes);
+	free(args_env->pids);
+	free(args_env->path);
+	exit(-1);
+}
+
+void	print_outfile_error_exit(t_cmd *current, t_data *args_env)
+{
+	char	*error;
+
+	error = outfile_error(current->cmd[0], args_env->argv[args_env->argc - 2]);
+	if (!error)
+		return ; // test needed for frees
+	write(2, error, ft_strlen(error)); // should close fds
+	free(error);
+	free_exit(args_env);
+}
+
+void	print_cmd_error_exit(t_data *args_env, char *cmd)
+{
+	write(2, cmd, ft_strlen(cmd));
+	write(2, ": command not found\n", 20);
+	free_exit(args_env);
+}
+
+int    dup_close_last_child(t_data *args_env, int i)
+{
+    if (dup2(args_env->pipes[i - 1][0], 0) == -1)
+        return (-1);
+    if (dup2(args_env->outfile, 1) == -1)
+		return (-1);
+	close(args_env->pipes[i - 1][0]);
+    close(args_env->pipes[i - 1][1]);
+    return (0);
+}
+
+int	init_last_child(t_cmd *current, t_data *args_env, int i)
 {
 	int	pid;
 
-	// int	outfile;
 	pid = fork();
 	if (pid == -1)
 		return (-1);
 	if (pid == 0)
 	{
-		// printf("last child\n");
+		args_env->outfile = open(args_env->argv[args_env->argc - 2],
+				O_WRONLY | O_TRUNC | O_CREAT, 0777);
 		if (args_env->outfile == -1)
-		{
-			bash_return_error(args_env->argv[0], NULL);
-			exit(-1);
-		}
+			print_outfile_error_exit(current, args_env);
 		if (!(current->execve_args))
-		{
-		    ft_putstr_fd(current->cmd[0], 2);
-			ft_putstr_fd(": command not found\n", 2);
-			free_cmd_lst(args_env->cmd_lst);
-			ft_free_tab((void **)pipes);
-			free(args_env->pids);
-			free(args_env->path);
-			exit(-1);
-		}
-		if (dup2(pipes[i - 1][0], 0) == -1)
-			return (-1);
-		if (dup2(args_env->outfile, 1) == -1)
-			return (-1);
-		close(pipes[i - 1][0]);
-		close(pipes[i - 1][1]);
+            print_cmd_error_exit(args_env, current->cmd[0]);
+        dup_close_last_child(args_env, i);        // to protect
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
 	}
-	close(pipes[i - 1][0]);
-	close(pipes[i - 1][1]);
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
 	return (pid);
 }
 
-int	init_child(t_cmd *current, t_data *args_env, int **pipes, int i)
+int dup_close_mid_child(t_data *args_env, int i)
+{
+    if (dup2(args_env->pipes[i - 1][0], 0) == -1)
+		return (-1);
+	if (dup2(args_env->pipes[i][1], 1) == -1)
+		return (-1);
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
+	close(args_env->pipes[i][1]);
+    return (0);
+}
+
+int	init_child(t_cmd *current, t_data *args_env, int i)
 {
 	int	pid;
 
-	if (pipe(pipes[i]) == -1)
-		return (-1);
+	if (pipe(args_env->pipes[i]) == -1)
+		return (-1);                        // to protect
 	pid = fork();
 	if (pid == -1)
 		return (-1);
 	if (pid == 0)
 	{
-		// printf("middle child\n");
-		close(pipes[i][0]);
+		close(args_env->pipes[i][0]);
 		if (!(current->execve_args))
-		{
-            ft_putstr_fd(current->cmd[0], 2);
-			ft_putstr_fd(": command not found\n", 2);
-			free_cmd_lst(args_env->cmd_lst);
-			ft_free_tab((void **)pipes);
-			free(args_env->pids);
-			free(args_env->path);
-			exit(-1);
-		}
-		if (dup2(pipes[i - 1][0], 0) == -1)
-			return (-1);
-		if (dup2(pipes[i][1], 1) == -1)
-			return (-1);
-		close(pipes[i - 1][0]);
-		close(pipes[i - 1][1]);
-		close(pipes[i][1]);
+			print_cmd_error_exit(args_env, current->cmd[0]);
+        dup_close_mid_child(args_env, i);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
 	}
-	close(pipes[i - 1][0]);
-	close(pipes[i - 1][1]);
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
 	return (pid);
 }
 
 int	wait_all_pid(int *pids, int count)
 {
 	int	status;
+	int	i;
 
-	while (count > 0)
-    {
-		wait(pids[count], &status, WUNTRACED); // to protect ?
-        count--;
-    }
+	i = 0;
+	while (i < count)
+	{
+		waitpid(pids[i], &status, WUNTRACED); // to protect ?
+		i++;
+	}
 	return (status);
 }
 
 int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 {
 	t_cmd	*current;
-	int		**pipe_fds;
 	int		*pids;
 	int		lst_size;
 	int		i;
 
 	current = *lst;
-	printf("lst size = %d\n", ft_list_size(lst));
+	// printf("lst size = %d\n", ft_list_size(lst));
 	lst_size = ft_list_size(lst);
-	pipe_fds = alloc_int_tab(lst_size, 2); // pas bon, si > 2-> lst_size - 1
-	if (!pipe_fds)
+	args_env->pipes = alloc_int_tab(lst_size, 2); // pas bon, si > 2-> lst_size - 1
+	if (!args_env->pipes)
 		return (-1);
 	pids = malloc(sizeof(int) * lst_size);
 	if (!pids)
 		return (-1);
 	args_env->pids = pids;
 	i = 0;
-	if (pipe(pipe_fds[0]) == -1)
+	if (pipe(args_env->pipes[0]) == -1)
 		return (-1);
 	while (current)
 	{
 		if (i == 0)
-			pids[i] = init_first_child(current, args_env, pipe_fds);
+			pids[i] = init_first_child(current, args_env);
 		else if (!current->next)
-			pids[i] = init_last_child(current, args_env, pipe_fds, i);
+			pids[i] = init_last_child(current, args_env, i);
 		else
-			pids[i] = init_child(current, args_env, pipe_fds, i);
+			pids[i] = init_child(current, args_env, i);
 		i++;
 		current = current->next;
 	}
@@ -638,7 +687,7 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	// close(pipe_fds[1][0]);
 	// close(pipe_fds[1][1]);
 	wait_all_pid(pids, ft_list_size(lst));
-	ft_free_tab((void **)pipe_fds);
+	ft_free_tab((void **)args_env->pipes);
 	free(pids);
 	return (0);
 }
@@ -721,34 +770,17 @@ int	main(int argc, char **argv, char **envp)
 	args_env.argc = argc;
 	args_env.argv = argv + 1;
 	args_env.envp = envp;
-	if (!ft_strncmp(argv[1], "here_doc", 8))
+	if (!ft_strncmp(argv[1], "here_doc", 8)) // need more than strncmp ?
 		handle_here_doc(&cmd_lst, &args_env);
 	else
 	{
-		args_env.infile = open(argv[1],
-								O_RDONLY); // need protection
-											// check for rights
-		args_env.outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC | O_CREAT,
-								0777); // need protection
 		cmd_lst = create_cmd_lst(argv + 2, argc - 2);
 		if (!cmd_lst)
 		{
-			printf("uo laa aone\n");
+			printf("!cmd lst");
 			return (-1); // need free close whatever
 		}
 	}
-	printf("lst size = %d\n", ft_list_size(&cmd_lst));
-	// current = cmd_lst;
-	// while (current)
-	// {
-	// 	i = 0;
-	// 	while (current->cmd[i])
-	// 	{
-	// 		printf("%s\n", current->cmd[i]);
-	// 		i++;
-	// 	}
-	// 	current = current->next;
-	// }
 	args_env.cmd_lst = &cmd_lst;
 	check_cmds(&cmd_lst, path);
 	if (!check_failed_alloc(&cmd_lst))

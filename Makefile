@@ -6,7 +6,7 @@
 #    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/08 16:48:42 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/12 12:04:49 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,5 +47,7 @@ fclean : clean
 
 re : fclean
 	make all
+
+bonus : all
 
 .PHONY : all bonus clean fclean re
