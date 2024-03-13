@@ -6,13 +6,23 @@
 #    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/12 12:04:49 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/13 17:35:38 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = pipex
 
-SRCS = ./pipex.c
+SRCS = ./srcs/pipex.c \
+		./srcs/free_funcs.c \
+		./srcs/error_handling.c \
+		./srcs/dup_close_childs.c \
+		./srcs/cmd_exec.c \
+		./srcs/cmd_checking.c \
+		./srcs/heredoc_handling.c \
+		./srcs/utils.c \
+		./srcs/mem_alloc.c \
+		./srcs/str_manipulation.c \
+		./srcs/list_funcs.c
 
 OBJ = $(SRCS:.c=.o)
 
@@ -38,7 +48,7 @@ $(NAME) : $(OBJ)
 
 clean :
 	make -sC $(PATH_LIBFT) clean
-	rm -f *o
+	rm -f ./srcs/*o
 
 fclean : clean
 	make -sC $(PATH_LIBFT) fclean
