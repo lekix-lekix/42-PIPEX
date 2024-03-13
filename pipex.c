@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/12 16:57:19 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/13 08:05:32 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,20 +181,6 @@ char	*bash_error_cat(char *filename)
 	ft_strlcpy(str, "bash: ", 7);
 	ft_strlcat(str, filename, filename_len + 7);
 	return (str);
-}
-
-int	bash_return_error(char *filename, char **to_free)
-{
-	char	*error;
-
-	if (to_free)
-		ft_free_tab((void **)to_free);
-	error = bash_error_cat(filename);
-	if (!error)
-		return (-1);
-	perror(error);
-	free(error);
-	return (-1);
 }
 
 int	cmd_error(char *cmd)
@@ -467,6 +453,28 @@ int	**alloc_int_tab(int size, int int_nb)
 	return (tab);
 }
 
+void	free_exit(t_data *args_env)
+{
+	free_cmd_lst(args_env->cmd_lst);
+	ft_free_tab((void **)args_env->pipes);
+	free(args_env->pids);
+	free(args_env->path);
+	exit(-1);
+}
+
+int	bash_file_error_exit(t_data *args_env, char *filename)
+{
+	char	*error;
+
+	error = bash_error_cat(filename);
+	if (!error)
+		return (-1);
+	perror(error);
+	free(error);
+    free_exit(args_env);
+	return (-1);
+}
+
 int	init_first_child(t_cmd *current, t_data *args_env)
 {
 	int	pid;
@@ -480,7 +488,7 @@ int	init_first_child(t_cmd *current, t_data *args_env)
 		args_env->infile = open(args_env->argv[0], O_RDONLY); // need protection
 		if (args_env->infile == -1)
 		{
-			bash_return_error(args_env->argv[0], NULL);
+			bash_file_error_exit(args_env, args_env->argv[0]);
 			free_cmd_lst(args_env->cmd_lst);
 			ft_free_tab((void **)args_env->pipes);
 			free(args_env->pids);
@@ -537,22 +545,13 @@ char	*outfile_error(char *cmd, char *outfile)
 	return (full_error);
 }
 
-void	free_exit(t_data *args_env)
-{
-	free_cmd_lst(args_env->cmd_lst);
-	ft_free_tab((void **)args_env->pipes);
-	free(args_env->pids);
-	free(args_env->path);
-	exit(-1);
-}
-
 void	print_outfile_error_exit(t_cmd *current, t_data *args_env)
 {
 	char	*error;
 
 	error = outfile_error(current->cmd[0], args_env->argv[args_env->argc - 2]);
 	if (!error)
-		return ; // test needed for frees
+		return ;                        // test needed for frees
 	write(2, error, ft_strlen(error)); // should close fds
 	free(error);
 	free_exit(args_env);
@@ -565,15 +564,15 @@ void	print_cmd_error_exit(t_data *args_env, char *cmd)
 	free_exit(args_env);
 }
 
-int    dup_close_last_child(t_data *args_env, int i)
+int	dup_close_last_child(t_data *args_env, int i)
 {
-    if (dup2(args_env->pipes[i - 1][0], 0) == -1)
-        return (-1);
-    if (dup2(args_env->outfile, 1) == -1)
+	if (dup2(args_env->pipes[i - 1][0], 0) == -1)
+		return (-1);
+	if (dup2(args_env->outfile, 1) == -1)
 		return (-1);
 	close(args_env->pipes[i - 1][0]);
-    close(args_env->pipes[i - 1][1]);
-    return (0);
+	close(args_env->pipes[i - 1][1]);
+	return (0);
 }
 
 int	init_last_child(t_cmd *current, t_data *args_env, int i)
@@ -588,10 +587,10 @@ int	init_last_child(t_cmd *current, t_data *args_env, int i)
 		args_env->outfile = open(args_env->argv[args_env->argc - 2],
 				O_WRONLY | O_TRUNC | O_CREAT, 0777);
 		if (args_env->outfile == -1)
-			print_outfile_error_exit(current, args_env);
+			bash_file_error_exit(args_env, args_env->argv[args_env->argc - 2]);
 		if (!(current->execve_args))
-            print_cmd_error_exit(args_env, current->cmd[0]);
-        dup_close_last_child(args_env, i);        // to protect
+			print_cmd_error_exit(args_env, current->cmd[0]);
+		dup_close_last_child(args_env, i); // to protect
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
@@ -601,16 +600,16 @@ int	init_last_child(t_cmd *current, t_data *args_env, int i)
 	return (pid);
 }
 
-int dup_close_mid_child(t_data *args_env, int i)
+int	dup_close_mid_child(t_data *args_env, int i)
 {
-    if (dup2(args_env->pipes[i - 1][0], 0) == -1)
+	if (dup2(args_env->pipes[i - 1][0], 0) == -1)
 		return (-1);
 	if (dup2(args_env->pipes[i][1], 1) == -1)
 		return (-1);
 	close(args_env->pipes[i - 1][0]);
 	close(args_env->pipes[i - 1][1]);
 	close(args_env->pipes[i][1]);
-    return (0);
+	return (0);
 }
 
 int	init_child(t_cmd *current, t_data *args_env, int i)
@@ -618,7 +617,7 @@ int	init_child(t_cmd *current, t_data *args_env, int i)
 	int	pid;
 
 	if (pipe(args_env->pipes[i]) == -1)
-		return (-1);                        // to protect
+		return (-1); // to protect
 	pid = fork();
 	if (pid == -1)
 		return (-1);
@@ -627,7 +626,7 @@ int	init_child(t_cmd *current, t_data *args_env, int i)
 		close(args_env->pipes[i][0]);
 		if (!(current->execve_args))
 			print_cmd_error_exit(args_env, current->cmd[0]);
-        dup_close_mid_child(args_env, i);
+		dup_close_mid_child(args_env, i);
 		if (execve(current->execve_args[0], current->execve_args,
 				args_env->envp) == -1)
 			return (-1);
@@ -661,7 +660,7 @@ int	exec_cmd_lst(t_cmd **lst, t_data *args_env)
 	current = *lst;
 	// printf("lst size = %d\n", ft_list_size(lst));
 	lst_size = ft_list_size(lst);
-	args_env->pipes = alloc_int_tab(lst_size, 2); // pas bon, si > 2-> lst_size - 1
+	args_env->pipes = alloc_int_tab(lst_size, 2);
 	if (!args_env->pipes)
 		return (-1);
 	pids = malloc(sizeof(int) * lst_size);
