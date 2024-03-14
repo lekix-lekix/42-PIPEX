@@ -6,7 +6,7 @@
 /*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:35:11 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 13:45:49 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/14 18:03:46 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ int	init_first_child(t_cmd *current, t_data *args_env)
 	return (pid);
 }
 
-int	init_child(t_cmd *current, t_data *args_env, int i)
+int	init_mid_child(t_cmd *current, t_data *args_env, int i)
 {
 	int	pid;
 
@@ -70,11 +70,11 @@ int	init_all_childs(t_cmd **cmd_lst, t_data *args_env, int *pids)
 		else if (!current->next)
 			pids[i] = init_last_child(current, args_env, i);
 		else
-			pids[i] = init_child(current, args_env, i);
+			pids[i] = init_mid_child(current, args_env, i);
 		i++;
 		current = current->next;
-	}
-    return (0);
+	};
+	return (0);
 }
 
 int	exec_cmd_lst(t_cmd **cmd_lst, t_data *args_env)
@@ -90,8 +90,9 @@ int	exec_cmd_lst(t_cmd **cmd_lst, t_data *args_env)
 	if (!pids)
 		return (-1);
 	args_env->pids = pids;
-    init_all_childs(cmd_lst, args_env, pids);
+	init_all_childs(cmd_lst, args_env, pids);
 	wait_all_pid(pids, lst_size);
+	close_pipes(args_env->pipes);
 	ft_free_tab((void **)args_env->pipes);
 	free(pids);
 	return (0);

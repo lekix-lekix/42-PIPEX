@@ -6,7 +6,7 @@
 /*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/29 15:20:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 12:39:32 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/14 18:11:58 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,9 @@ char				**create_execve_args(t_cmd *node, char *cmd_path);
 int					exec_cmd_lst(t_cmd **cmd_lst, t_data *args_env);
 int					wait_all_pid(int *pids, int count);
 int					exec_first_child(t_cmd *current, t_data *args_env);
+int					dup_close_only_child(t_data *args_env);
 int					exec_mid_child(t_cmd *current, t_data *args_env, int i);
 int					exec_last_child(t_cmd *current, t_data *args_env, int i);
+int					close_pipes(int **pipes);
 
 #endif

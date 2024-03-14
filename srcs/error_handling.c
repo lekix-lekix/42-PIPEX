@@ -6,11 +6,11 @@
 /*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:21:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 13:42:46 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/14 16:37:11 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../pipex.h"
+#include "../pipex.h"
 
 char	*bash_error_cat(char *filename)
 {
@@ -61,6 +61,10 @@ void	print_cmd_error_exit(t_data *args_env, char *cmd)
 {
 	write(2, cmd, ft_strlen(cmd));
 	write(2, ": command not found\n", 20);
-    close(args_env->outfile);
+	close(args_env->infile);
+	if (args_env->infile)
+		close(args_env->outfile);
+	if (args_env->outfile)
+		close(args_env->outfile);
 	free_exit(args_env);
 }

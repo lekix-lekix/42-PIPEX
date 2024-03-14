@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   free_funcs.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:17:43 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 17:26:16 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../pipex.h"
+#include "../pipex.h"
 
 int	ft_free_char_tab(char **tab)
 {
@@ -55,9 +55,24 @@ int	free_cmd_lst(t_cmd **lst)
 	return (0);
 }
 
+int	close_pipes(int **pipes)
+{
+	int	i;
+
+	i = -1;
+	while (pipes[++i])
+	{
+		close(pipes[i][0]);
+		close(pipes[i][1]);
+	}
+	return (0);
+}
+
 void	free_exit(t_data *args_env)
 {
 	free_cmd_lst(args_env->cmd_lst);
+	if (args_env->pipes)
+		close_pipes(args_env->pipes);
 	ft_free_tab((void **)args_env->pipes);
 	free(args_env->pids);
 	free(args_env->path);

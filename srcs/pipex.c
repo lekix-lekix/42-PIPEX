@@ -6,7 +6,7 @@
 /*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 14:07:27 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 14:27:58 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/14 18:30:07 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,16 +14,16 @@
 
 int	init_args_env(t_data *args_env, int argc, char **argv, char **envp)
 {
-	char	*path;
-
-	path = get_path(envp);
-	if (!path)
-		return (-1); // need free close whatever
-	args_env->path = path;
+	args_env->path = get_path(envp);
+	if (!args_env->path)
+		return (-1);
 	args_env->argc = argc;
 	args_env->argv = argv + 1;
 	args_env->envp = envp;
+	args_env->infile = 0;
+	args_env->outfile = 0;
 	args_env->here_doc = 0;
+	args_env->pipes = NULL;
 	return (0);
 }
 
@@ -33,8 +33,8 @@ int	main(int argc, char **argv, char **envp)
 	t_data	args_env;
 
 	if (init_args_env(&args_env, argc, argv, envp) == -1)
-		return (-1);
-	if (!ft_strncmp(argv[1], "here_doc", 8)) // need more than strncmp ?
+		return (-1);                         // exec pipex si no path et malloc
+	if (!ft_strncmp(argv[1], "here_doc", 8)) // need more than strncmp ?z
 		cmd_lst = handle_here_doc(&args_env);
 	else
 	{
