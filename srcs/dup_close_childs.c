@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dup_close_childs.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:29:24 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:47:21 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,5 +46,3 @@ int	dup_close_last_child(t_data *args_env, int i)
 	close(args_env->pipes[i - 1][1]);
 	return (0);
 }
-
-

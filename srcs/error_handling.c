@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   error_handling.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:21:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:42:46 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,5 +61,6 @@ void	print_cmd_error_exit(t_data *args_env, char *cmd)
 {
 	write(2, cmd, ft_strlen(cmd));
 	write(2, ": command not found\n", 20);
+    close(args_env->outfile);
 	free_exit(args_env);
 }

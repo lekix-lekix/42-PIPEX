@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   heredoc_handling.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:02:55 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 14:20:36 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../pipex.h"
+#include "../pipex.h"
 
-char	*create_random_filename(void)
+char	*get_random_filename(void)
 {
 	char	*filename;
 	char	buf[5];
@@ -35,7 +35,21 @@ char	*create_random_filename(void)
 	}
 	buf[i] = '\0';
 	ft_strlcat(filename, buf, 15);
+	close(fd);
 	return (filename);
+}
+
+char	*create_random_filename(void)
+{
+	char	*filename;
+
+	filename = get_random_filename();
+	if (!filename)
+		return (NULL);
+	if (access(filename, F_OK) == -1)
+		return (filename);
+	else
+		return (create_random_filename());
 }
 
 int	write_heredoc_file(t_data *args_env, char *limiter)
@@ -65,14 +79,9 @@ int	write_heredoc_file(t_data *args_env, char *limiter)
 t_cmd	*handle_here_doc(t_data *args_env)
 {
 	t_cmd	*cmd_lst;
-	size_t	limiter_len;
-	char	*line;
 
-	line = NULL;
 	args_env->here_doc = 1;
-	limiter_len = ft_strlen(args_env->argv[1]);
 	args_env->filename = create_random_filename();
-		// need to check if file exists
 	if (!args_env->filename)
 		return (NULL); // need free
 	args_env->infile = open(args_env->filename, O_RDWR | O_CREAT, 0777);

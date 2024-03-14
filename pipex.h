@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/29 15:20:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:18:29 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 12:39:32 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ int					dup_close_first_child(t_data *args_env);
 int					dup_close_mid_child(t_data *args_env, int i);
 int					dup_close_last_child(t_data *args_env, int i);
 void				check_cmds(t_cmd **cmds_lst, char *path);
-int					exec_cmd_lst(t_cmd **lst, t_data *args_env);
 t_cmd				*create_cmd_lst(char **argv, int args_nb);
 int					ft_list_size(t_cmd **lst);
 char				*get_path(char **envp);
@@ -69,6 +68,10 @@ char				**create_null_arg(void);
 void				check_cmds(t_cmd **cmds_lst, char *path);
 char				*add_slash(char *str);
 char				**create_execve_args(t_cmd *node, char *cmd_path);
+int					exec_cmd_lst(t_cmd **cmd_lst, t_data *args_env);
 int					wait_all_pid(int *pids, int count);
+int					exec_first_child(t_cmd *current, t_data *args_env);
+int					exec_mid_child(t_cmd *current, t_data *args_env, int i);
+int					exec_last_child(t_cmd *current, t_data *args_env, int i);
 
 #endif

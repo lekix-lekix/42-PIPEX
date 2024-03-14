@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   cmd_checking.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:33:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:19 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 12:00:52 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../pipex.h"
+#include "../pipex.h"
 
 char	*test_cmd_paths(char **paths, char *cmd_test)
 {
@@ -28,14 +28,15 @@ char	*test_cmd_paths(char **paths, char *cmd_test)
 		ft_strlcpy(path_test, paths[i], ft_strlen(paths[i]) + 1);
 		ft_strlcat(path_test, cmd_test, s_len);
 		if (access(path_test, X_OK) == 0)
-        {
-            free(cmd_test);
+		{
+			ft_free_tab((void **)paths);
+			free(cmd_test);
 			return (path_test);
-        }
+		}
 		free(path_test);
 	}
-    free(cmd_test);
-	free(path_test);
+	ft_free_tab((void **)paths);
+	free(cmd_test);
 	return (NULL);
 }
 
@@ -43,9 +44,7 @@ char	*check_cmd(t_cmd *node, char *path)
 {
 	char	**paths;
 	char	*cmd_test;
-	int		i;
 
-	i = -1;
 	if (!node->cmd[0][0])
 		return (NULL);
 	if (access(node->cmd[0], X_OK) == 0)
@@ -64,12 +63,7 @@ char	*check_cmd(t_cmd *node, char *path)
 		ft_free_tab((void **)paths);
 		return (set_alloc_err(node));
 	}
-	cmd_test = test_cmd_paths(paths, cmd_test);
-	ft_free_tab((void **)paths);
-	if (cmd_test)
-		return (cmd_test);
-	free(cmd_test);
-	return (NULL);
+	return (test_cmd_paths(paths, cmd_test));
 }
 
 void	check_cmds(t_cmd **cmds_lst, char *path)

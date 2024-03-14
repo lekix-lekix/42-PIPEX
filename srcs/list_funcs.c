@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   list_funcs.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:53:04 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:40:52 by lekix            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,21 @@ void	add_cmd_node(t_cmd **lst, t_cmd *node)
 	current->next = node;
 }
 
+char    **check_arg(char *argv)
+{
+    char **arg;
+
+    if (!ft_strlen(argv))
+        arg = create_null_arg();
+    else if (str_is_only_spaces(argv))
+        arg = copy_arg(argv);
+    else
+        arg = ft_split(argv, ' ');
+    if (!arg)
+        return (NULL);
+    return (arg);
+}
+
 t_cmd	*create_cmd_lst(char **argv, int args_nb)
 {
 	t_cmd	*cmd_lst;
@@ -60,16 +75,11 @@ t_cmd	*create_cmd_lst(char **argv, int args_nb)
 
 	i = -1;
 	cmd_lst = NULL;
-	while (++i < args_nb - 1) // a verifier pourquoi args_nb - 1
+	while (++i < args_nb - 1)
 	{
-		if (!ft_strlen(argv[i]))
-			arg = create_null_arg();
-		else if (str_is_only_spaces(argv[i]))
-			arg = copy_arg(argv[i]);
-		else
-			arg = ft_split(argv[i], ' ');
-		if (!arg)
-			return (NULL);
+        arg = check_arg(argv[i]);
+        if (!arg)
+            return (NULL);
 		node = create_cmd_node(arg);
 		if (!node)
 		{

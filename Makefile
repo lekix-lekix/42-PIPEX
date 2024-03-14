@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
+#    By: lekix <lekix@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/13 17:35:38 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/14 12:20:21 by lekix            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,8 @@ SRCS = ./srcs/pipex.c \
 		./srcs/utils.c \
 		./srcs/mem_alloc.c \
 		./srcs/str_manipulation.c \
-		./srcs/list_funcs.c
+		./srcs/list_funcs.c \
+		./srcs/childs_cmd_exec.c
 
 OBJ = $(SRCS:.c=.o)
 
