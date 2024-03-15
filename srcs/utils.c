@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:00:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/13 17:21:05 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/15 17:10:14 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,16 +21,21 @@ void	set_tab_null(char **tab, int alloc_nb)
 		tab[i] = NULL;
 }
 
-char	*get_path(char **envp)
+char	*get_path(char **envp, t_data *args_env)
 {
 	char	*str;
 	int		i;
 
 	i = -1;
-	while (envp[++i])
+    str = NULL;
+	while (envp && envp[++i])
 	{
 		if (!ft_strncmp(envp[i], "PATH=", 5))
-			str = ft_strtrim(envp[i], "PATH=");
+        {
+			str = ft_strtrim(envp[i], "PATH="); // malloc ok
+            if (!str)
+                mem_error_exit(args_env);
+        }
 	}
 	return (str);
 }

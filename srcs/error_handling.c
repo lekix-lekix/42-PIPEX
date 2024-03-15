@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   error_handling.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:21:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 16:37:11 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/15 17:04:30 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,18 @@ int	cmd_error(char *cmd)
 	perror(error);
 	free(error);
 	return (-1);
+}
+
+int mem_error_exit(t_data *args_env)
+{
+    char *error;
+    
+    error = bash_error_cat("memory allocation failed\n");
+    write(2, error, ft_strlen(error));
+    free(error);
+    if (args_env)
+        free_exit(args_env);
+    return (-1);
 }
 
 int	bash_file_error_exit(t_data *args_env, char *filename)

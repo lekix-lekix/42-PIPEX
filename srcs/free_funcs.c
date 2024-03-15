@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   free_funcs.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:17:43 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 17:26:16 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/15 17:01:44 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ int	ft_free_tab(void **tab)
 	int	i;
 
 	i = -1;
-	while (tab[++i])
+	while (tab && tab[++i])
 		free(tab[i]);
 	free(tab);
 	return (-1);
@@ -70,11 +70,15 @@ int	close_pipes(int **pipes)
 
 void	free_exit(t_data *args_env)
 {
-	free_cmd_lst(args_env->cmd_lst);
+    if (args_env->cmd_lst)
+	    free_cmd_lst(args_env->cmd_lst);
 	if (args_env->pipes)
 		close_pipes(args_env->pipes);
-	ft_free_tab((void **)args_env->pipes);
-	free(args_env->pids);
-	free(args_env->path);
+	if (args_env->pipes)
+        ft_free_tab((void **)args_env->pipes);
+	if (args_env->pids)
+        free(args_env->pids);
+	if (args_env->path)
+        free(args_env->path);
 	exit(-1);
 }

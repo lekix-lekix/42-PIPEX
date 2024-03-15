@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cmd_checking.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:33:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 12:00:52 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/15 16:49:23 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ char	*check_cmd(t_cmd *node, char *path)
 	char	*cmd_test;
 
 	if (!node->cmd[0][0])
-		return (NULL);
+		return (NULL); 
 	if (access(node->cmd[0], X_OK) == 0)
 	{
 		cmd_test = ft_strdup(node->cmd[0]);
@@ -54,16 +54,20 @@ char	*check_cmd(t_cmd *node, char *path)
 			return (NULL);
 		return (cmd_test);
 	}
-	paths = ft_split(path, ':');
-	if (!paths)
-		return (set_alloc_err(node));
-	cmd_test = add_slash(node->cmd[0]);
-	if (!cmd_test)
-	{
-		ft_free_tab((void **)paths);
-		return (set_alloc_err(node));
-	}
-	return (test_cmd_paths(paths, cmd_test));
+    if (path)
+    {
+	    paths = ft_split(path, ':');
+	    if (!paths)
+	    	return (set_alloc_err(node));
+	    cmd_test = add_slash(node->cmd[0]);
+	    if (!cmd_test)
+	    {
+		    ft_free_tab((void **)paths);
+		    return (set_alloc_err(node));
+	    }
+	    return (test_cmd_paths(paths, cmd_test));
+    }
+    return (NULL);
 }
 
 void	check_cmds(t_cmd **cmds_lst, char *path)

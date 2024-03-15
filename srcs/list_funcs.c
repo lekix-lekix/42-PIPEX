@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   list_funcs.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lekix <lekix@student.42.fr>                +#+  +:+       +#+        */
+/*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:53:04 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/14 13:40:52 by lekix            ###   ########.fr       */
+/*   Updated: 2024/03/15 17:28:00 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,35 +61,36 @@ char    **check_arg(char *argv)
         arg = copy_arg(argv);
     else
         arg = ft_split(argv, ' ');
-    if (!arg)
-        return (NULL);
     return (arg);
 }
 
-t_cmd	*create_cmd_lst(char **argv, int args_nb)
+int create_cmd_lst(char **argv, int args_nb, t_data *args_env)
 {
-	t_cmd	*cmd_lst;
+	// t_cmd	*cmd_lst;
 	t_cmd	*node;
 	char	**arg;
 	int		i;
 
 	i = -1;
-	cmd_lst = NULL;
+	// cmd_lst = NULL;
 	while (++i < args_nb - 1)
 	{
-        arg = check_arg(argv[i]);
+        if (i == 1)
+            arg = NULL;
+        else
+            arg = check_arg(argv[i]);
         if (!arg)
-            return (NULL);
+            mem_error_exit(args_env);
 		node = create_cmd_node(arg);
 		if (!node)
 		{
 			ft_free_tab((void **)arg);
-			return (NULL);
+			return (-1);
 		}
-		if (!cmd_lst)
-			cmd_lst = node;
+		if (!args_env->cmd_lst)
+			args_env->cmd_lst = &node;
 		else
-			add_cmd_node(&cmd_lst, node);
+			add_cmd_node(args_env->cmd_lst, node);
 	}
-	return (cmd_lst);
+	return (0);
 }
