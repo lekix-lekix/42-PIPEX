@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:21:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/15 17:04:30 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 17:34:21 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,22 +26,29 @@ char	*bash_error_cat(char *filename)
 	return (str);
 }
 
-int	cmd_error(char *cmd)
-{
-	char	*error;
-	int		cmd_len;
+// int	cmd_error(char *cmd)
+// {
+// 	char	*error;
+// 	int		cmd_len;
 
-	cmd_len = ft_strlen(cmd);
-	printf("%s\n", cmd);
-	error = malloc(sizeof(char) * (cmd_len + 2));
-	if (!error)
-		return (0);
-	ft_strlcpy(error, cmd, cmd_len);
-	error[cmd_len] = ':';
-	error[cmd_len + 1] = '\0';
-	perror(error);
-	free(error);
-	return (-1);
+// 	cmd_len = ft_strlen(cmd);
+// 	printf("%s\n", cmd);
+// 	error = malloc(sizeof(char) * (cmd_len + 2));
+// 	if (!error)
+// 		return (0);
+// 	ft_strlcpy(error, cmd, cmd_len);
+// 	error[cmd_len] = ':';
+// 	error[cmd_len + 1] = '\0';
+// 	perror(error);
+// 	free(error);
+// 	return (-1);
+// }
+
+int perror_exit(char *func, t_data *args_env)
+{
+    perror(func);
+    free_exit(args_env);
+    return (-1);
 }
 
 int mem_error_exit(t_data *args_env)

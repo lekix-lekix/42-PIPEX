@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:17:43 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/15 17:01:44 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 18:03:08 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ int	close_pipes(int **pipes)
 	i = -1;
 	while (pipes[++i])
 	{
-		close(pipes[i][0]);
+		if (close(pipes[i][0]) == -1)
 		close(pipes[i][1]);
 	}
 	return (0);

@@ -6,13 +6,13 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:33:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/15 16:49:23 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 16:18:17 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../pipex.h"
 
-char	*test_cmd_paths(char **paths, char *cmd_test)
+char	*test_cmd_paths(char **paths, char *cmd_test, t_cmd *node)
 {
 	char	*path_test;
 	int		s_len;
@@ -22,9 +22,12 @@ char	*test_cmd_paths(char **paths, char *cmd_test)
 	while (paths[++i])
 	{
 		s_len = ft_strlen(paths[i]) + ft_strlen(cmd_test) + 1;
-		path_test = malloc(sizeof(char) * s_len);
+		path_test = malloc(sizeof(char) * s_len); // malloc ok
 		if (!path_test)
-			return (NULL);
+		{
+			free(cmd_test);
+			return (set_alloc_err(node, paths));
+		}
 		ft_strlcpy(path_test, paths[i], ft_strlen(paths[i]) + 1);
 		ft_strlcat(path_test, cmd_test, s_len);
 		if (access(path_test, X_OK) == 0)
@@ -45,46 +48,50 @@ char	*check_cmd(t_cmd *node, char *path)
 	char	**paths;
 	char	*cmd_test;
 
-	if (!node->cmd[0][0])
-		return (NULL); 
+	// if (!node->cmd[0][0])
+	// 	return (NULL);
 	if (access(node->cmd[0], X_OK) == 0)
 	{
-		cmd_test = ft_strdup(node->cmd[0]);
+		cmd_test = ft_strdup(node->cmd[0]); // malloc ok
 		if (!cmd_test)
-			return (NULL);
+			return (set_alloc_err(node, NULL));
 		return (cmd_test);
 	}
-    if (path)
-    {
-	    paths = ft_split(path, ':');
-	    if (!paths)
-	    	return (set_alloc_err(node));
-	    cmd_test = add_slash(node->cmd[0]);
-	    if (!cmd_test)
-	    {
-		    ft_free_tab((void **)paths);
-		    return (set_alloc_err(node));
-	    }
-	    return (test_cmd_paths(paths, cmd_test));
-    }
-    return (NULL);
+	if (path)
+	{
+		paths = ft_split(path, ':'); // malloc ok
+		if (!paths)
+			return (set_alloc_err(node, NULL));
+		cmd_test = add_slash(node->cmd[0]); // malloc ok
+		if (!cmd_test)
+			return (set_alloc_err(node, paths));
+		return (test_cmd_paths(paths, cmd_test, node));
+	}
+	return (NULL);
 }
 
-void	check_cmds(t_cmd **cmds_lst, char *path)
+void	check_cmds(t_data *args_env)
 {
 	t_cmd	*current;
 	char	*cmd_path;
 
-	current = *cmds_lst;
+	current = *args_env->cmd_lst;
 	while (current)
 	{
-		cmd_path = check_cmd(current, path);
+		cmd_path = check_cmd(current, args_env->path);
 		if (!cmd_path && current->failed_alloc)
-			return ;
+			mem_error_exit(args_env);
 		else if (!cmd_path)
 			current->execve_args = NULL;
 		else
-			current->execve_args = create_execve_args(current, cmd_path);
+        {
+			current->execve_args = create_execve_args(current, cmd_path); // malloc ok
+            if (!current->execve_args)
+            {
+                free(cmd_path);
+                mem_error_exit(args_env);
+            }
+        }
 		current = current->next;
 	}
 }

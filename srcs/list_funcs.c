@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:53:04 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/15 17:28:00 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 14:07:10 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,29 +66,24 @@ char    **check_arg(char *argv)
 
 int create_cmd_lst(char **argv, int args_nb, t_data *args_env)
 {
-	// t_cmd	*cmd_lst;
 	t_cmd	*node;
 	char	**arg;
 	int		i;
 
 	i = -1;
-	// cmd_lst = NULL;
 	while (++i < args_nb - 1)
 	{
-        if (i == 1)
-            arg = NULL;
-        else
-            arg = check_arg(argv[i]);
+        arg = check_arg(argv[i]);
         if (!arg)
-            mem_error_exit(args_env);
+            mem_error_exit(args_env); // malloc ok
 		node = create_cmd_node(arg);
 		if (!node)
-		{
-			ft_free_tab((void **)arg);
-			return (-1);
-		}
-		if (!args_env->cmd_lst)
-			args_env->cmd_lst = &node;
+        {
+            ft_free_tab((void **)arg); // malloc ok
+            mem_error_exit(args_env);
+        }
+		if (i == 0)
+			*args_env->cmd_lst = node;
 		else
 			add_cmd_node(args_env->cmd_lst, node);
 	}

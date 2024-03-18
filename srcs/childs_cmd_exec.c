@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 12:01:56 by lekix             #+#    #+#             */
-/*   Updated: 2024/03/15 13:54:10 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 17:53:53 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,7 @@ int	exec_first_child(t_cmd *current, t_data *args_env)
 		bash_file_error_exit(args_env, args_env->argv[0]);
 	if (!current->execve_args)
 		print_cmd_error_exit(args_env, current->cmd[0]);
-    if (dup_close_first_child(args_env) == -1)
-		    return (-1);
+    dup_close_first_child(args_env);
 	if (execve(current->execve_args[0], current->execve_args, args_env->envp) ==
 		-1)
 		return (-1);

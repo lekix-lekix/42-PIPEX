@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:00:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/15 17:10:14 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/18 18:20:08 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ char	*get_path(char **envp, t_data *args_env)
 
 	i = -1;
     str = NULL;
+    (void) args_env;
 	while (envp && envp[++i])
 	{
 		if (!ft_strncmp(envp[i], "PATH=", 5))
@@ -45,21 +46,18 @@ char	**create_execve_args(t_cmd *node, char *cmd_path)
 	char	**args;
 	int		i;
 
-	args = malloc(sizeof(char *) * 4);
+	args = malloc(sizeof(char *) * 4); // malloc ok
 	if (!args)
-	{
-		node->failed_alloc = 1;
-		return (NULL);
-	}
+        return (NULL);
 	set_tab_null(args, 3);
 	args[0] = cmd_path;
 	i = 0;
 	while (node->cmd[++i])
 	{
-		args[1] = ft_strjoin_space(args[1], node->cmd[i]);
+		args[1] = ft_strjoin_space(args[1], node->cmd[i]); // malloc ok
 		if (!args[1])
 		{
-			set_alloc_err(node);
+            free(args);
 			return (NULL);
 		}
 	}
