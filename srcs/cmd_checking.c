@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:33:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/18 16:18:17 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/19 13:44:12 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,6 @@ char	*check_cmd(t_cmd *node, char *path)
 	char	**paths;
 	char	*cmd_test;
 
-	// if (!node->cmd[0][0])
-	// 	return (NULL);
 	if (access(node->cmd[0], X_OK) == 0)
 	{
 		cmd_test = ft_strdup(node->cmd[0]); // malloc ok

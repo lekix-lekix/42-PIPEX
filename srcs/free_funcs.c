@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:17:43 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/18 18:03:08 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/19 13:51:56 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,9 +60,9 @@ int	close_pipes(int **pipes)
 	int	i;
 
 	i = -1;
-	while (pipes[++i])
+	while (pipes && pipes[++i])
 	{
-		if (close(pipes[i][0]) == -1)
+		close(pipes[i][0]);
 		close(pipes[i][1]);
 	}
 	return (0);
@@ -70,15 +70,18 @@ int	close_pipes(int **pipes)
 
 void	free_exit(t_data *args_env)
 {
-    if (args_env->cmd_lst)
-	    free_cmd_lst(args_env->cmd_lst);
+	close_pipes(args_env->pipes);
+	if (args_env->cmd_lst)
+		free_cmd_lst(args_env->cmd_lst);
 	if (args_env->pipes)
 		close_pipes(args_env->pipes);
 	if (args_env->pipes)
-        ft_free_tab((void **)args_env->pipes);
+		ft_free_tab((void **)args_env->pipes);
 	if (args_env->pids)
-        free(args_env->pids);
+		free(args_env->pids);
 	if (args_env->path)
-        free(args_env->path);
+		free(args_env->path);
+	if (args_env->filename)
+		free(args_env->filename);
 	exit(-1);
 }

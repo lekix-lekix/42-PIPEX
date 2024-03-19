@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:35:11 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/18 18:24:07 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/19 15:48:48 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,22 +27,16 @@ int	init_first_child(t_cmd *current, t_data *args_env)
 int	init_mid_child(t_cmd *current, t_data *args_env, int i)
 {
 	int	pid;
-    int pipe_return;
 
-    
-    // if (pipe(args_env->pipes[i]) == -1)
-    pipe_return = -1;
-    if (pipe_return == -1)
-		return (perror_exit("pipe", args_env)); // to protect
+	if (pipe(args_env->pipes[i]) == -1)
+		return (perror_exit("pipe", args_env)); // ok
 	pid = fork();
 	if (pid == -1)
-		return (perror_exit("fork", args_env));
+		return (perror_exit("fork", args_env)); // ok
 	if (pid == 0)
 		exec_mid_child(current, args_env, i);
-	if (close(args_env->pipes[i - 1][0]) == -1)
-        return (perror_exit("close", args_env));
-	if (close(args_env->pipes[i - 1][1]) == -1)
-        return (perror_exit("close", args_env));
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
 	return (pid);
 }
 
@@ -55,10 +49,8 @@ int	init_last_child(t_cmd *current, t_data *args_env, int i)
 		return (perror_exit("fork", args_env));
 	if (pid == 0)
 		exec_last_child(current, args_env, i);
-	if (close(args_env->pipes[i - 1][0]) == -1)
-        return (perror_exit("close", args_env));
-	if (close(args_env->pipes[i - 1][1]) == -1)
-        return (perror_exit("close", args_env));
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
 	return (pid);
 }
 
