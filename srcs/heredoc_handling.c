@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:02:55 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/19 16:13:44 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/19 16:54:45 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,8 @@ int handle_here_doc(t_data *args_env)
     if (args_env->argc < 6)
     {
         write(2, "bash: syntax error\n", 19);
-        return (-1);
+        free(args_env->path);
+        exit(-1);
     }    
 	args_env->here_doc = 1;
 	args_env->filename = create_random_filename(args_env);
