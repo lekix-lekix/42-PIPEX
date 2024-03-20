@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:35:11 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/20 13:54:43 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 13:43:23 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,22 @@ int	init_first_child(t_cmd *current, t_data *args_env)
 		return (perror_exit("fork", args_env));
 	if (pid == 0)
 		exec_first_child(current, args_env);
+	return (pid);
+}
+
+int	init_mid_child(t_cmd *current, t_data *args_env, int i)
+{
+	int	pid;
+
+	if (pipe(args_env->pipes[i]) == -1)
+		return (perror_exit("pipe", args_env));
+	pid = fork();
+	if (pid == -1)
+		return (perror_exit("fork", args_env));
+	if (pid == 0)
+		exec_mid_child(current, args_env, i);
+	close(args_env->pipes[i - 1][0]);
+	close(args_env->pipes[i - 1][1]);
 	return (pid);
 }
 
@@ -51,8 +67,10 @@ int	init_all_childs(t_data *args_env)
 	{
 		if (i == 0)
 			args_env->pids[i] = init_first_child(current, args_env);
-		else
+		else if (!current->next)
 			args_env->pids[i] = init_last_child(current, args_env, i);
+		else
+			args_env->pids[i] = init_mid_child(current, args_env, i);
 		i++;
 		current = current->next;
 	}

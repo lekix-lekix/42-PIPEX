@@ -6,7 +6,7 @@
 #    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/20 12:40:19 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/20 14:00:22 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,10 +26,10 @@ SRCS = ./srcs/childs_cmd_exec.c \
 		./srcs/str_manipulation.c \
 		./srcs/utils.c
 
-SRCS_BONUS = ./srcs/childs_cmd_exec.c \
+SRCS_BONUS = ./srcs/childs_cmd_exec_bonus.c \
 		./srcs/cmd_checking.c \
-		./srcs/cmd_exec.c \
-		./srcs/dup_close_childs.c \
+		./srcs/cmd_exec_bonus.c \
+		./srcs/dup_close_childs_bonus.c \
 		./srcs/error_handling.c \
 		./srcs/free_funcs.c \
 		./srcs/heredoc_handling_bonus.c \

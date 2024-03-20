@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:33:01 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/20 13:42:34 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 14:46:15 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@ int	copy_test_cmd(char *path_test, char *curr_path, char *cmd, int s_len)
 {
 	ft_strlcpy(path_test, curr_path, ft_strlen(curr_path) + 1);
 	ft_strlcat(path_test, cmd, s_len);
-	if (access(path_test, X_OK) == 0)
-		return (1);
-	return (0);
+	if (access(path_test, F_OK | X_OK) == -1)
+		return (0);
+	return (1);
 }
 
 char	*test_cmd_paths(char **paths, char *cmd_test, t_cmd *node)
