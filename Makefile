@@ -6,7 +6,7 @@
 #    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/20 14:00:22 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/20 15:20:27 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,7 +53,9 @@ NEW_PATH_LIBFT = .
 
 LIBFT = ./42-MEGALIBFT/megalibft.a
 
-all : $(NAME)
+all : 
+	git submodule update --init
+	make $(NAME)
 
 $(NAME) : $(OBJ)
 	make -C $(PATH_LIBFT)
@@ -64,7 +66,9 @@ $(NAME) : $(OBJ)
 
 bonus : $(NAME_BONUS)
 
-$(NAME_BONUS) : $(OBJ_BONUS)
+$(NAME_BONUS) : 
+	git submodule update --init
+	$(OBJ_BONUS)
 	make -C $(PATH_LIBFT)
 	$(CC) $(FLAGS) $(OBJ_BONUS) $(LIBFT) -o $(NAME_BONUS) -g3
 
