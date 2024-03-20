@@ -6,7 +6,7 @@
 #    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/20 15:20:27 by kipouliq         ###   ########.fr        #
+#    Updated: 2024/03/20 15:28:06 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -64,11 +64,11 @@ $(NAME) : $(OBJ)
 %.o:%.c
 	$(CC) $(FLAGS) -I $(PATH_LIBFT) -c $< -o $@
 
-bonus : $(NAME_BONUS)
-
-$(NAME_BONUS) : 
+bonus:	
 	git submodule update --init
-	$(OBJ_BONUS)
+	make $(NAME_BONUS)
+
+$(NAME_BONUS) : $(OBJ_BONUS)
 	make -C $(PATH_LIBFT)
 	$(CC) $(FLAGS) $(OBJ_BONUS) $(LIBFT) -o $(NAME_BONUS) -g3
 
@@ -83,7 +83,5 @@ fclean : clean
 
 re : fclean
 	make all
-
-bonus : all
 
 .PHONY : all bonus clean fclean re
