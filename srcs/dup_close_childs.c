@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:29:24 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/19 12:17:40 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 13:43:35 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ int	dup_close_mid_child(t_data *args_env, int i)
 	if (dup2(args_env->pipes[i][1], 1) == -1)
 		return (perror_exit("dup2", args_env));
 	close(args_env->pipes[i - 1][0]);
-    close(args_env->pipes[i - 1][1]);
+	close(args_env->pipes[i - 1][1]);
 	close(args_env->pipes[i][1]);
 	return (0);
 }

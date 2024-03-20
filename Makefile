@@ -3,29 +3,45 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lekix <lekix@student.42.fr>                +#+  +:+       +#+         #
+#    By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/26 17:19:05 by kipouliq          #+#    #+#              #
-#    Updated: 2024/03/14 12:20:21 by lekix            ###   ########.fr        #
+#    Updated: 2024/03/20 12:40:19 by kipouliq         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = pipex
 
-SRCS = ./srcs/pipex.c \
-		./srcs/free_funcs.c \
-		./srcs/error_handling.c \
-		./srcs/dup_close_childs.c \
-		./srcs/cmd_exec.c \
+NAME_BONUS = pipex_bonus
+
+SRCS = ./srcs/childs_cmd_exec.c \
 		./srcs/cmd_checking.c \
-		./srcs/heredoc_handling.c \
-		./srcs/utils.c \
+		./srcs/cmd_exec.c \
+		./srcs/dup_close_childs.c \
+		./srcs/error_handling.c \
+		./srcs/free_funcs.c \
+		./srcs/list_funcs.c \
+		./srcs/main.c \
 		./srcs/mem_alloc.c \
 		./srcs/str_manipulation.c \
+		./srcs/utils.c
+
+SRCS_BONUS = ./srcs/childs_cmd_exec.c \
+		./srcs/cmd_checking.c \
+		./srcs/cmd_exec.c \
+		./srcs/dup_close_childs.c \
+		./srcs/error_handling.c \
+		./srcs/free_funcs.c \
+		./srcs/heredoc_handling_bonus.c \
 		./srcs/list_funcs.c \
-		./srcs/childs_cmd_exec.c
+		./srcs/main_bonus.c \
+		./srcs/mem_alloc.c \
+		./srcs/str_manipulation.c \
+		./srcs/utils.c
 
 OBJ = $(SRCS:.c=.o)
+
+OBJ_BONUS = $(SRCS_BONUS:.c=.o)
 
 CC = cc
 
@@ -41,11 +57,16 @@ all : $(NAME)
 
 $(NAME) : $(OBJ)
 	make -C $(PATH_LIBFT)
-	# cp ./megalibft/megalibft.a ./megalibft.a
 	$(CC) $(FLAGS) $(OBJ) $(LIBFT) -o $(NAME) -g3
 
 %.o:%.c
 	$(CC) $(FLAGS) -I $(PATH_LIBFT) -c $< -o $@
+
+bonus : $(NAME_BONUS)
+
+$(NAME_BONUS) : $(OBJ_BONUS)
+	make -C $(PATH_LIBFT)
+	$(CC) $(FLAGS) $(OBJ_BONUS) $(LIBFT) -o $(NAME_BONUS) -g3
 
 clean :
 	make -sC $(PATH_LIBFT) clean

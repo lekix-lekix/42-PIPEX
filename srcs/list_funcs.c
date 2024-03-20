@@ -6,11 +6,11 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:53:04 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/18 14:07:10 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 13:44:01 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../pipex.h"
+#include "../pipex.h"
 
 int	ft_list_size(t_cmd **lst)
 {
@@ -51,20 +51,20 @@ void	add_cmd_node(t_cmd **lst, t_cmd *node)
 	current->next = node;
 }
 
-char    **check_arg(char *argv)
+char	**check_arg(char *argv)
 {
-    char **arg;
+	char	**arg;
 
-    if (!ft_strlen(argv))
-        arg = create_null_arg();
-    else if (str_is_only_spaces(argv))
-        arg = copy_arg(argv);
-    else
-        arg = ft_split(argv, ' ');
-    return (arg);
+	if (!ft_strlen(argv))
+		arg = create_null_arg();
+	else if (str_is_only_spaces(argv))
+		arg = copy_arg(argv);
+	else
+		arg = ft_split(argv, ' ');
+	return (arg);
 }
 
-int create_cmd_lst(char **argv, int args_nb, t_data *args_env)
+int	create_cmd_lst(char **argv, int args_nb, t_data *args_env)
 {
 	t_cmd	*node;
 	char	**arg;
@@ -73,15 +73,15 @@ int create_cmd_lst(char **argv, int args_nb, t_data *args_env)
 	i = -1;
 	while (++i < args_nb - 1)
 	{
-        arg = check_arg(argv[i]);
-        if (!arg)
-            mem_error_exit(args_env); // malloc ok
+		arg = check_arg(argv[i]);
+		if (!arg)
+			mem_error_exit(args_env);
 		node = create_cmd_node(arg);
 		if (!node)
-        {
-            ft_free_tab((void **)arg); // malloc ok
-            mem_error_exit(args_env);
-        }
+		{
+			ft_free_tab((void **)arg);
+			mem_error_exit(args_env);
+		}
 		if (i == 0)
 			*args_env->cmd_lst = node;
 		else

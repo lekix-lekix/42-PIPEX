@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 16:35:11 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/19 15:48:48 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 13:43:23 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,10 @@ int	init_mid_child(t_cmd *current, t_data *args_env, int i)
 	int	pid;
 
 	if (pipe(args_env->pipes[i]) == -1)
-		return (perror_exit("pipe", args_env)); // ok
+		return (perror_exit("pipe", args_env));
 	pid = fork();
 	if (pid == -1)
-		return (perror_exit("fork", args_env)); // ok
+		return (perror_exit("fork", args_env));
 	if (pid == 0)
 		exec_mid_child(current, args_env, i);
 	close(args_env->pipes[i - 1][0]);
@@ -73,7 +73,7 @@ int	init_all_childs(t_data *args_env)
 			args_env->pids[i] = init_mid_child(current, args_env, i);
 		i++;
 		current = current->next;
-	};
+	}
 	return (0);
 }
 
@@ -83,10 +83,10 @@ int	exec_cmd_lst(t_data *args_env)
 	int	lst_size;
 
 	lst_size = ft_list_size(args_env->cmd_lst);
-	args_env->pipes = alloc_int_tab(lst_size, 2); // malloc ok
+	args_env->pipes = alloc_int_tab(lst_size, 2);
 	if (!args_env->pipes)
 		mem_error_exit(args_env);
-	pids = malloc(sizeof(int) * lst_size); // malloc ok
+	pids = malloc(sizeof(int) * lst_size);
 	if (!pids)
 		mem_error_exit(args_env);
 	args_env->pids = pids;

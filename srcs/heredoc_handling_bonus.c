@@ -1,33 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   heredoc_handling.c                                 :+:      :+:    :+:   */
+/*   heredoc_handling_bonus.c                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:02:55 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/19 16:54:45 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 13:44:56 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../pipex.h"
 
-void    read_into_filename(t_data *args_env, int fd, char *buf, char *filename)
+void	read_into_filename(t_data *args_env, int fd, char *buf, char *filename)
 {
-    int i;
+	int	i;
 
-    i = 0;
-    ft_strlcpy(filename, "/tmp/", 6);
+	i = 0;
+	ft_strlcpy(filename, "/tmp/", 6);
 	i = -1;
 	while (i < 4)
 	{
 		if (read(fd, buf + i, 1) == -1)
-            perror_exit("read", args_env);
+			perror_exit("read", args_env);
 		if (ft_isalnum(buf[i]))
 			i++;
 	}
 	buf[i] = '\0';
-    ft_strlcat(filename, buf, 15);
+	ft_strlcat(filename, buf, 15);
 }
 
 char	*get_random_filename(t_data *args_env)
@@ -36,15 +36,15 @@ char	*get_random_filename(t_data *args_env)
 	char	buf[5];
 	int		fd;
 
-	filename = malloc(sizeof(char) * 16); // ok 
+	filename = malloc(sizeof(char) * 16);
 	if (!filename)
 		mem_error_exit(args_env);
-	fd = open("/dev/urandom", O_RDONLY); // ok
+	fd = open("/dev/urandom", O_RDONLY);
 	if (fd == -1)
-    {
-        free(filename);
+	{
+		free(filename);
 		perror_exit("open", args_env);
-    }
+	}
 	ft_strlcpy(filename, "/tmp/", 6);
 	read_into_filename(args_env, fd, buf, filename);
 	close(fd);
@@ -61,10 +61,10 @@ char	*create_random_filename(t_data *args_env)
 	if (access(filename, F_OK) == -1)
 		return (filename);
 	else
-    {
-        free(filename);
+	{
+		free(filename);
 		return (create_random_filename(args_env));
-    }
+	}
 }
 
 int	write_heredoc_file(t_data *args_env, char *limiter)
@@ -84,11 +84,11 @@ int	write_heredoc_file(t_data *args_env, char *limiter)
 				limiter_len))
 			break ;
 		if (write(args_env->infile, line, ft_strlen(line)) == -1)
-        {
-            perror("write");
-            free(line);
-            free_exit(args_env);
-        }
+		{
+			perror("write");
+			free(line);
+			free_exit(args_env);
+		}
 		free(line);
 	}
 	get_next_line(0, 1);
@@ -96,18 +96,18 @@ int	write_heredoc_file(t_data *args_env, char *limiter)
 	return (0);
 }
 
-int handle_here_doc(t_data *args_env)
+int	handle_here_doc(t_data *args_env)
 {
-    if (args_env->argc < 6)
-    {
-        write(2, "bash: syntax error\n", 19);
-        free(args_env->path);
-        exit(-1);
-    }    
+	if (args_env->argc < 6)
+	{
+		write(2, "bash: syntax error\n", 19);
+		free(args_env->path);
+		exit(-1);
+	}
 	args_env->here_doc = 1;
 	args_env->filename = create_random_filename(args_env);
 	if (!args_env->filename)
-		return (mem_error_exit(args_env)); // need free
+		return (mem_error_exit(args_env));
 	args_env->infile = open(args_env->filename, O_RDWR | O_CREAT, 0777);
 	if (args_env->infile == -1)
 		bash_file_error_exit(args_env, args_env->filename);

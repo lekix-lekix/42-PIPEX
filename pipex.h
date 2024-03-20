@@ -6,7 +6,7 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/29 15:20:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/18 17:14:50 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 12:44:28 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,10 +53,10 @@ int					dup_close_first_child(t_data *args_env);
 int					dup_close_mid_child(t_data *args_env, int i);
 int					dup_close_last_child(t_data *args_env, int i);
 void				check_cmds(t_data *args_env);
-int                 create_cmd_lst(char **argv, int args_nb, t_data *args_env);
+int					create_cmd_lst(char **argv, int args_nb, t_data *args_env);
 int					ft_list_size(t_cmd **lst);
 char				*get_path(char **envp, t_data *args_env);
-int                 handle_here_doc(t_data *args_env);
+int					handle_here_doc(t_data *args_env);
 int					check_failed_alloc(t_cmd **lst);
 int					**alloc_int_tab(int size, int int_nb);
 char				**copy_arg(char *argv);
@@ -72,7 +72,7 @@ int					exec_first_child(t_cmd *current, t_data *args_env);
 int					exec_mid_child(t_cmd *current, t_data *args_env, int i);
 int					exec_last_child(t_cmd *current, t_data *args_env, int i);
 int					close_pipes(int **pipes);
-int                 mem_error_exit(t_data *args_env);
-int                 perror_exit(char *func, t_data *args_env);
+int					mem_error_exit(t_data *args_env);
+int					perror_exit(char *func, t_data *args_env);
 
 #endif

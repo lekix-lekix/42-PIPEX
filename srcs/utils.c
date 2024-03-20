@@ -6,12 +6,11 @@
 /*   By: kipouliq <kipouliq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 17:00:22 by kipouliq          #+#    #+#             */
-/*   Updated: 2024/03/19 16:46:36 by kipouliq         ###   ########.fr       */
+/*   Updated: 2024/03/20 12:45:01 by kipouliq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../pipex.h"
-#include "wait.h"
 
 void	set_tab_null(char **tab, int alloc_nb)
 {
@@ -34,7 +33,7 @@ char	*get_path(char **envp, t_data *args_env)
 	{
 		if (!ft_strncmp(envp[i], "PATH=", 5))
 		{
-			str = ft_strtrim(envp[i], "PATH="); // malloc ok
+			str = ft_strtrim(envp[i], "PATH=");
 			if (!str)
 				mem_error_exit(args_env);
 		}
@@ -47,7 +46,7 @@ char	**create_execve_args(t_cmd *node, char *cmd_path)
 	char	**args;
 	int		i;
 
-	args = malloc(sizeof(char *) * 4); // malloc ok
+	args = malloc(sizeof(char *) * 4);
 	if (!args)
 		return (NULL);
 	set_tab_null(args, 3);
@@ -55,7 +54,7 @@ char	**create_execve_args(t_cmd *node, char *cmd_path)
 	i = 0;
 	while (node->cmd[++i])
 	{
-		args[1] = ft_strjoin_space(args[1], node->cmd[i]); // malloc ok
+		args[1] = ft_strjoin_space(args[1], node->cmd[i]);
 		if (!args[1])
 		{
 			free(args);
@@ -74,7 +73,7 @@ int	wait_all_pid(int *pids, int count)
 	i = 0;
 	while (i < count)
 	{
-		waitpid(pids[i], &status, WUNTRACED); // to protect ?
+		waitpid(pids[i], &status, WUNTRACED);
 		i++;
 	}
 	return (status);
